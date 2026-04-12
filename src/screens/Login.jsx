@@ -47,106 +47,120 @@ export const Login = () => {
 
   return (
     <div className="screen active" id="s-login">
-      <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(ellipse 90% 55% at 50% -5%, rgba(82,204,79,.1), transparent), radial-gradient(ellipse 60% 40% at 85% 85%, rgba(255,208,96,.06), transparent)', pointerEvents: 'none' }}></div>
-      <div style={{ position: 'absolute', inset: 0, backgroundImage: 'linear-gradient(var(--bdr) 1px, transparent 1px), linear-gradient(90deg, var(--bdr) 1px, transparent 1px)', backgroundSize: '38px 38px', pointerEvents: 'none', opacity: .6 }}></div>
+      {/* Dynamic Background */}
+      <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(ellipse 90% 55% at 50% -5%, rgba(82,204,79,.15), transparent), radial-gradient(ellipse 60% 40% at 85% 85%, rgba(255,208,96,.1), transparent)', pointerEvents: 'none' }}></div>
+      <div style={{ position: 'absolute', inset: 0, backgroundImage: 'linear-gradient(rgba(255,255,255,.03) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.03) 1px, transparent 1px)', backgroundSize: '38px 38px', pointerEvents: 'none' }}></div>
       
-      <div className="scroller" style={{ display: 'flex', flexDirection: 'column', padding: '0 1.4rem 1.8rem', position: 'relative' }}>
+      <div className="scroller" style={{ display: 'flex', flexDirection: 'column', position: 'relative', overflowX: 'hidden' }}>
         
-        {/* Logo Section */}
-        <div style={{ paddingTop: '3.2rem', marginBottom: '2rem', textAlign: 'center' }}>
-          <div className="asp" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '5rem', height: '5rem', background: 'linear-gradient(145deg, var(--bg3), var(--bg2))', border: '1px solid rgba(120,242,117,.3)', borderRadius: '1.4rem', marginBottom: '1.4rem', position: 'relative', boxShadow: '0 20px 50px rgba(0,0,0,.5)' }}>
-            <svg width="38" height="38" viewBox="0 0 40 40" fill="none">
-              <rect x="3" y="15" width="13" height="19" rx="2" stroke="#52cc4f" strokeWidth="1.4"/>
-              <rect x="21" y="9" width="16" height="26" rx="2" stroke="#52cc4f" strokeWidth="1.4"/>
-              <rect x="7" y="19" width="5" height="1.8" rx=".9" fill="#52cc4f" opacity=".6"/>
-              <rect x="7" y="23" width="5" height="1.8" rx=".9" fill="#52cc4f" opacity=".6"/>
-              <rect x="25" y="13" width="8" height="1.8" rx=".9" fill="#52cc4f" opacity=".6"/>
-              <rect x="25" y="17" width="8" height="1.8" rx=".9" fill="#52cc4f" opacity=".6"/>
-              <rect x="25" y="21" width="8" height="1.8" rx=".9" fill="#52cc4f" opacity=".6"/>
-              <circle cx="20" cy="7" r="3.5" fill="none" stroke="#ffd060" strokeWidth="1.3"/>
-              <circle cx="20" cy="7" r="1.5" fill="#ffd060"/>
-            </svg>
-          </div>
-          <div className="au d1">
-            <h1 style={{ fontFamily: 'var(--fd)', fontSize: '2.1rem', fontWeight: 800, letterSpacing: '-.04em', marginBottom: '.3rem', lineHeight: 1 }}>Counter<span className="gtext">OS</span></h1>
-            <p style={{ fontSize: '.72rem', color: 'var(--t2)', letterSpacing: '.14em', textTransform: 'uppercase', fontWeight: 600 }}>Retailer Intelligence Platform</p>
-          </div>
-          <div className="au d2" style={{ display: 'flex', justifyContent: 'center', gap: '.4rem', marginTop: '1rem', flexWrap: 'wrap' }}>
-            <Chip variant="g">Dual Rewards</Chip>
-            <Chip variant="o">4-Tier Cashback</Chip>
-            <Chip variant="b">Smart Invoicing</Chip>
-          </div>
+        {/* Premium Graphic Header */}
+        <div style={{ position: 'relative', paddingTop: '4rem', paddingBottom: '2.5rem', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+            
+            {/* The Floating Boxes properly constrained within a Hero Container */}
+            <div className="au" style={{ position: 'relative', width: '280px', height: '240px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                
+                {/* Generated 3D Illustration */}
+                <div style={{ position: 'absolute', width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', animation: 'float 5s ease-in-out infinite' }}>
+                    <img src="/auth_hero.png" alt="CounterOS Vision" style={{ width: '85%', objectFit: 'contain', filter: 'drop-shadow(0 20px 40px rgba(82,204,79,0.4))' }} />
+                </div>
+
+                {/* Floating Card Left: Properly Bound */}
+                <div className="afloat2 d1" style={{ position: 'absolute', left: '-20px', top: '10%', background: 'rgba(5,9,5,.8)', backdropFilter: 'blur(12px)', border: '1px solid rgba(120,242,117,.3)', borderRadius: 'var(--r12)', padding: '.75rem', display: 'flex', alignItems: 'center', gap: '.6rem', boxShadow: '0 8px 32px rgba(0,0,0,.6)' }}>
+                  <div style={{ width: '2.2rem', height: '2.2rem', background: 'rgba(120,242,117,.15)', borderRadius: '.6rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <span className="material-symbols-outlined fi" style={{ fontSize: '1.2rem', color: 'var(--g4)' }}>account_balance_wallet</span>
+                  </div>
+                  <div>
+                    <p style={{ fontSize: '.65rem', color: 'var(--t2)', textTransform: 'uppercase', letterSpacing: '.05em' }}>Cashback</p>
+                    <p style={{ fontFamily: 'var(--fd)', fontWeight: 800, fontSize: '1rem', color: 'var(--g4)' }}>+₹1,180</p>
+                  </div>
+                </div>
+
+                {/* Floating Card Right: Properly Bound */}
+                <div className="afloat d2" style={{ position: 'absolute', right: '-15px', bottom: '15%', background: 'rgba(5,9,5,.8)', backdropFilter: 'blur(12px)', border: '1px solid rgba(255,208,96,.3)', borderRadius: 'var(--r12)', padding: '.75rem', display: 'flex', alignItems: 'center', gap: '.6rem', boxShadow: '0 8px 32px rgba(0,0,0,.6)' }}>
+                  <div style={{ width: '2.2rem', height: '2.2rem', background: 'rgba(255,208,96,.15)', borderRadius: '.6rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <span className="material-symbols-outlined fi" style={{ fontSize: '1.2rem', color: 'var(--o4)' }}>storefront</span>
+                  </div>
+                  <div>
+                    <p style={{ fontSize: '.65rem', color: 'var(--t2)', textTransform: 'uppercase', letterSpacing: '.05em' }}>Rewards</p>
+                    <p style={{ fontFamily: 'var(--fd)', fontWeight: 800, fontSize: '1rem', color: 'var(--o4)' }}>+₹356</p>
+                  </div>
+                </div>
+            </div>
+
+            <div className="au d2" style={{ textAlign: 'center', marginTop: '1rem' }}>
+              <h1 style={{ fontFamily: 'var(--fd)', fontSize: '2.5rem', fontWeight: 800, letterSpacing: '-.04em', lineHeight: 1.1 }}>Counter<span className="gtext">OS</span></h1>
+              <p style={{ fontSize: '.8rem', color: 'var(--t2)', letterSpacing: '.14em', textTransform: 'uppercase', fontWeight: 700, marginTop: '.4rem' }}>Retailer Intelligence</p>
+            </div>
+            
+            <div className="au d3" style={{ display: 'flex', justifyContent: 'center', gap: '.5rem', marginTop: '1.25rem' }}>
+              <Chip variant="g">Dual Earning</Chip>
+              <Chip variant="o">AI Invoicing</Chip>
+            </div>
         </div>
 
-        {/* Floating cards */}
-        <div className="au d3" style={{ position: 'relative', height: '88px', marginBottom: '2rem' }}>
-          <div className="afloat" style={{ position: 'absolute', left: 0, top: 0, background: 'var(--bg2)', border: '1px solid var(--bdr2)', borderRadius: 'var(--r12)', padding: '.6rem .9rem', display: 'flex', alignItems: 'center', gap: '.6rem', boxShadow: 'var(--sh)' }}>
-            <div style={{ width: '2rem', height: '2rem', background: 'rgba(120,242,117,.1)', borderRadius: '.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <span className="material-symbols-outlined fi" style={{ fontSize: '.95rem', color: 'var(--g4)' }}>local_shipping</span>
-            </div>
-            <div>
-              <p style={{ fontSize: '.58rem', color: 'var(--t3)', textTransform: 'uppercase', letterSpacing: '.08em' }}>Purchase Cashback</p>
-              <p style={{ fontFamily: 'var(--fd)', fontWeight: 800, fontSize: '.9rem', color: 'var(--g4)' }}>+₹1,180</p>
-            </div>
-          </div>
-          <div className="afloat2" style={{ position: 'absolute', right: 0, bottom: 0, background: 'var(--bg2)', border: '1px solid rgba(255,208,96,.2)', borderRadius: 'var(--r12)', padding: '.6rem .9rem', display: 'flex', alignItems: 'center', gap: '.6rem', boxShadow: 'var(--sh)' }}>
-            <div style={{ width: '2rem', height: '2rem', background: 'rgba(255,208,96,.1)', borderRadius: '.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <span className="material-symbols-outlined fi" style={{ fontSize: '.95rem', color: 'var(--o4)' }}>storefront</span>
-            </div>
-            <div>
-              <p style={{ fontSize: '.58rem', color: 'var(--t3)', textTransform: 'uppercase', letterSpacing: '.08em' }}>Sale Rewards</p>
-              <p style={{ fontFamily: 'var(--fd)', fontWeight: 800, fontSize: '.9rem', color: 'var(--o4)' }}>+₹356</p>
-            </div>
-          </div>
-        </div>
-
-        {/* Login form */}
-        <div className="au d4" style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', gap: '.875rem' }}>
+        {/* Login form Glass Panel */}
+        <div className="au d4" style={{ flex: 1, display: 'flex', flexDirection: 'column', background: 'linear-gradient(180deg, rgba(16,23,16,0.6), rgba(5,9,5,1))', backdropFilter: 'blur(20px)', borderTop: '1px solid var(--bdr2)', padding: '2rem 1.4rem' }}>
           {step === 1 ? (
-            <div>
-              <p style={{ fontSize: '1.25rem', fontWeight: 800, marginBottom: '.875rem', letterSpacing: '-.02em' }}>Sign in to your account</p>
-              <Input
-                type="tel"
-                maxLength="10"
-                placeholder="Mobile number"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                wrapperClass="margin-bottom-875"
-                prefix={<div style={{ background: 'var(--inp)', border: '1.5px solid var(--bdr2)', borderRadius: 'var(--r8)', padding: '.8rem .875rem', fontWeight: 700, color: 'var(--t2)', display: 'flex', alignItems: 'center', gap: '.25rem', flexShrink: 0, fontSize: '.85rem' }}>🇮🇳 +91</div>}
-              />
-              <Button onClick={handleSendOTP} style={{ marginTop: '.875rem' }}>
-                <span className="material-symbols-outlined fi">sms</span> Send OTP
-              </Button>
+            <div style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
+              <p style={{ fontSize: '1.4rem', fontWeight: 800, marginBottom: '.5rem', letterSpacing: '-.02em', color: 'var(--t1)' }}>Get Started</p>
+              <p style={{ fontSize: '.85rem', color: 'var(--t3)', marginBottom: '1.5rem', lineHeight: 1.5 }}>Enter your mobile number to securely sign in or create your new CounterOS retailer account.</p>
+
+              <div style={{ display: 'flex', alignItems: 'stretch', gap: '.6rem', marginBottom: '1.5rem' }}>
+                  <div style={{ background: 'var(--inp)', border: '1.5px solid var(--bdr2)', borderRadius: 'var(--r8)', padding: '0 1rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '.4rem', fontWeight: 800, fontSize: '1.1rem', color: 'var(--t2)' }}>
+                      🇮🇳 <span style={{ fontSize: '.9rem' }}>+91</span>
+                  </div>
+                  <input
+                    type="tel"
+                    maxLength="10"
+                    placeholder="Enter Mobile Number"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    style={{ flex: 1, background: 'var(--inp)', border: '1.5px solid var(--bdr2)', borderRadius: 'var(--r8)', padding: '1.1rem', fontSize: '1.1rem', fontWeight: 700, color: 'var(--t1)', fontFamily: 'var(--fm)', outline: 'none' }}
+                  />
+              </div>
+
+              <div style={{ marginTop: 'auto' }}>
+                  <Button onClick={handleSendOTP} style={{ padding: '1rem', fontSize: '1rem', borderRadius: 'var(--r12)' }}>
+                    Continue securely <span className="material-symbols-outlined fi">arrow_right_alt</span>
+                  </Button>
+              </div>
             </div>
           ) : (
-             <div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '.75rem', marginBottom: '.875rem', padding: '.7rem .875rem', background: 'rgba(120,242,117,.05)', border: '1px solid rgba(120,242,117,.15)', borderRadius: 'var(--r8)' }}>
-                <span className="material-symbols-outlined fi" style={{ color: 'var(--g4)', fontSize: '1.1rem' }}>mark_email_read</span>
-                <div>
-                  <p style={{ fontWeight: 700, fontSize: '.85rem' }}>OTP sent!</p>
-                  <p style={{ fontSize: '.72rem', color: 'var(--t2)' }}>Sent to +91 {phone}</p>
-                </div>
+             <div style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '2rem', textAlign: 'center' }}>
+                  <div style={{ width: '4rem', height: '4rem', background: 'rgba(120,242,117,.1)', border: '1px solid rgba(120,242,117,.3)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '1rem' }}>
+                      <span className="material-symbols-outlined fi" style={{ color: 'var(--g4)', fontSize: '2rem' }}>phonelink_ring</span>
+                  </div>
+                  <p style={{ fontSize: '1.4rem', fontWeight: 800, letterSpacing: '-.02em', color: 'var(--t1)', marginBottom: '.3rem' }}>Verify your number</p>
+                  <p style={{ fontSize: '.85rem', color: 'var(--t3)' }}>We've sent a 4-digit OTP to <strong style={{ color: 'var(--g4)' }}>+91 {phone}</strong></p>
               </div>
-              <OtpInput length={4} value={otp} onChange={setOtp} />
-              <p style={{ textAlign: 'center', fontSize: '.72rem', color: 'var(--t3)', margin: '.75rem 0' }}>Demo OTP: <strong style={{ color: 'var(--g4)', fontFamily: 'var(--fm)' }}>1234</strong></p>
-              <Button onClick={handleVerifyOTP}>
-                <span className="material-symbols-outlined fi">verified</span>Verify & Enter
-              </Button>
-              <button onClick={() => setStep(1)} style={{ background: 'none', border: 'none', color: 'var(--t3)', fontSize: '.78rem', cursor: 'pointer', width: '100%', textAlign: 'center', marginTop: '.6rem', padding: '.4rem' }}>← Change number</button>
+
+              <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1.5rem' }}>
+                  <OtpInput length={4} value={otp} onChange={setOtp} />
+              </div>
+              
+              <p style={{ textAlign: 'center', fontSize: '.75rem', color: 'var(--t3)', marginBottom: '2rem' }}>Developer Demo: <strong style={{ color: 'var(--g4)', fontFamily: 'var(--fm)', fontSize: '.9rem' }}>1234</strong></p>
+              
+              <div style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: '.8rem' }}>
+                  <Button onClick={handleVerifyOTP} style={{ padding: '1rem', fontSize: '1rem', borderRadius: 'var(--r12)' }}>
+                    Verify & Proceed <span className="material-symbols-outlined fi">verified</span>
+                  </Button>
+                  <button onClick={() => setStep(1)} style={{ background: 'rgba(255,255,255,.05)', border: '1px solid var(--bdr2)', color: 'var(--t2)', fontSize: '.85rem', cursor: 'pointer', width: '100%', textAlign: 'center', fontWeight: 700, padding: '1rem', borderRadius: 'var(--r12)' }}>
+                      Edit mobile number
+                  </button>
+              </div>
             </div>
           )}
           
-          <p style={{ fontSize: '.68rem', color: 'var(--t3)', textAlign: 'center', lineHeight: 1.5 }}>By continuing you agree to <span style={{ color: 'var(--g4)' }}>Terms</span> & <span style={{ color: 'var(--g4)' }}>Privacy</span></p>
-          
-          <div style={{ display: 'flex', alignItems: 'center', gap: '.5rem', marginTop: '.25rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '.5rem', margin: '1.25rem 0 .7rem' }}>
             <div style={{ flex: 1, height: '1px', background: 'var(--bdr)' }}></div>
-            <span style={{ fontSize: '.65rem', color: 'var(--t3)', whiteSpace: 'nowrap' }}>Already registered?</span>
+            <span style={{ fontSize: '.65rem', color: 'var(--t3)', whiteSpace: 'nowrap', textTransform: 'uppercase', letterSpacing: '.05em', fontWeight: 600 }}>Already registered?</span>
             <div style={{ flex: 1, height: '1px', background: 'var(--bdr)' }}></div>
           </div>
           
-          <button onClick={skipToHome} style={{ width: '100%', background: 'rgba(120,242,117,.06)', border: '1px solid rgba(120,242,117,.18)', borderRadius: 'var(--r8)', padding: '.7rem 1rem', color: 'var(--g4)', fontSize: '.82rem', fontWeight: 700, cursor: 'pointer', fontFamily: 'var(--fd)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '.4rem' }}>
-            <span className="material-symbols-outlined fi" style={{ fontSize: '.9rem' }}>login</span>
-            Enter registered number &amp; sign in directly
+          <button onClick={skipToHome} style={{ width: '100%', background: 'rgba(120,242,117,.06)', border: '1px solid rgba(120,242,117,.18)', borderRadius: 'var(--r12)', padding: '1rem', color: 'var(--g4)', fontSize: '.9rem', fontWeight: 700, cursor: 'pointer', fontFamily: 'var(--fm)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '.5rem' }}>
+            <span className="material-symbols-outlined fi" style={{ fontSize: '1.1rem' }}>login</span>
+            Sign in securely directly to Dashboard
           </button>
         </div>
       </div>
