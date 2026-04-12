@@ -10,18 +10,23 @@ import { showToast } from '../components/ui/Toast';
 
 export const Invoice = () => {
   const navigate = useNavigate();
-  const { addInventoryItem } = useAppContext();
+  const { addInventoryItem, user, inventory } = useAppContext();
   
   const [status, setStatus] = useState('idle'); // idle | processing | results
   const [procSteps, setProcSteps] = useState([]);
   const [parsedData, setParsedData] = useState(null);
   const [parsedProducts, setParsedProducts] = useState([]);
   const fileInputRef = useRef(null);
+  const cameraInputRef = useRef(null);
 
   const stepsList = ['Reading distributor details...','Scanning product list...','Extracting quantities & prices...','Calculating purchase cashback...','Finalising inventory data...'];
 
   const triggerUpload = () => {
     fileInputRef.current.click();
+  };
+
+  const triggerCamera = () => {
+    cameraInputRef.current.click();
   };
 
   const handleFile = (e) => {
@@ -45,7 +50,10 @@ export const Invoice = () => {
 
   const loadDemo = async () => {
     showProcessing();
-    const prompt = `Generate realistic Indian agricultural distributor invoice data as JSON.\nDistributor: Sharma Agri Distributors, Indore.\n5 products for an agri input dealer in Madhya Pradesh.\n{"distributor_name":"Sharma Agri Distributors","invoice_number":"SH-2024-0891","invoice_date":"12 Aug 2024","total_value":67450,"products":[{"name":"","category":"Fertilizer","quantity":10,"unit":"50kg bag","unit_price":1350,"total_price":13500}]}`;
+    const prompt = `Generate realistic Indian distributor invoice data for a "${user.cat}" input dealer as JSON.
+Format strict JSON with keys: 'distributor_name', 'invoice_number', 'invoice_date', 'total_value', and 'products'.
+'products' should be an array of exactly 4 objects containing: 'name', 'category', 'quantity', 'unit', 'unit_price', 'total_price'.
+Never hallucinate extra markdown outside the JSON string.`;
     const data = await Intelligence.askJSON(prompt);
     if (data && data.products) showResults(data, 'Demo_Invoice.pdf');
     else showDemoResults('Demo_Invoice.pdf');
@@ -73,13 +81,36 @@ export const Invoice = () => {
   };
 
   const showDemoResults = (fname) => {
+    // Dynamic Fallback Generator driven by actual Context
+    const slice = inventory.slice(0, 4);
+    
+    // If somehow empty, use generics
+    if (slice.length === 0) {
+       slice.push({ name: 'Generic Wholesale Item', cat: 'Misc', unit: 'box', buy: 500 });
+       slice.push({ name: 'Retail Supply Pack', cat: 'Misc', unit: 'pack', buy: 1200 });
+    }
+
+    const demoProds = slice.map(item => {
+        const qty = Math.floor(Math.random() * 40) + 10;
+        return {
+            name: item.name + ' (Restock)',
+            category: item.cat || 'General',
+            quantity: qty,
+            unit: item.unit,
+            unit_price: item.buy,
+            total_price: item.buy * qty,
+            added: false
+        };
+    });
+
+    const totalVal = demoProds.reduce((sum, p) => sum + p.total_price, 0);
+
     const demo = {
-      distributor_name: 'Sharma Agri Distributors', invoice_number: 'SH-2024-0891', invoice_date: '12 Aug 2024', total_value: 67450,
-      products: [
-        {name:'IFFCO DAP 18:46:0',category:'Fertilizer',quantity:20,unit:'50kg bag',unit_price:1350,total_price:27000, added: false},
-        {name:'Urea 46% N',category:'Fertilizer',quantity:30,unit:'50kg bag',unit_price:267,total_price:8010, added: false},
-        {name:'Chlorpyrifos 20% EC',category:'Pesticide',quantity:10,unit:'500ml',unit_price:435,total_price:4350, added: false},
-      ]
+      distributor_name: `${user.name.split(' ')[0]}'s Primary Supplier`, 
+      invoice_number: `INV-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`, 
+      invoice_date: new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }), 
+      total_value: totalVal,
+      products: demoProds
     };
     showResults(demo, fname);
   };
@@ -236,19 +267,30 @@ export const Invoice = () => {
           Upload a distributor invoice to automatically detect products, add stock, and claim <strong style={{ color: 'var(--t1)' }}>Purchase Cashback</strong>.
         </p>
 
-        <div onClick={triggerUpload} className="au d1" style={{ border: '2px dashed var(--bdr2)', borderRadius: 'var(--r12)', padding: '2.5rem 1rem', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '.75rem', background: 'var(--bg2)', cursor: 'pointer', transition: 'all .2s' }}>
-          <div style={{ width: '3.6rem', height: '3.6rem', borderRadius: '50%', background: 'var(--bg3)', border: '1px solid var(--bdr)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <span className="material-symbols-outlined" style={{ fontSize: '1.5rem', color: 'var(--g4)' }}>cloud_upload</span>
-          </div>
-          <div style={{ textAlign: 'center' }}>
-            <p style={{ fontSize: '1rem', fontWeight: 800, marginBottom: '.25rem' }}>Upload Invoice Document</p>
-            <p style={{ fontSize: '.72rem', color: 'var(--t3)' }}>PDF, JPG, or PNG (Max 5MB)</p>
-          </div>
-          <button style={{ background: 'rgba(120,242,117,.08)', border: '1px solid rgba(120,242,117,.2)', borderRadius: '9999px', padding: '.45rem 1.1rem', color: 'var(--g4)', fontSize: '.72rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '.3rem', marginTop: '.5rem', pointerEvents: 'none' }}>
-            <span className="material-symbols-outlined" style={{ fontSize: '.9rem' }}>file_open</span> Browse Files
-          </button>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '.8rem' }}>
+           <div onClick={triggerUpload} className="au d1" style={{ border: '2px dashed var(--bdr2)', borderRadius: 'var(--r12)', padding: '2rem 1rem', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '.6rem', background: 'var(--bg2)', cursor: 'pointer', transition: 'all .2s' }}>
+             <div style={{ width: '3rem', height: '3rem', borderRadius: '50%', background: 'var(--bg3)', border: '1px solid var(--bdr)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+               <span className="material-symbols-outlined" style={{ fontSize: '1.4rem', color: 'var(--g4)' }}>cloud_upload</span>
+             </div>
+             <div style={{ textAlign: 'center' }}>
+               <p style={{ fontSize: '.85rem', fontWeight: 800, marginBottom: '.1rem' }}>Upload File</p>
+               <p style={{ fontSize: '.65rem', color: 'var(--t3)' }}>PDF, JPG, PNG</p>
+             </div>
+           </div>
+
+           <div onClick={triggerCamera} className="au d1" style={{ animationDelay: '0.1s', border: '2px dashed var(--bdr2)', borderRadius: 'var(--r12)', padding: '2rem 1rem', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '.6rem', background: 'var(--bg2)', cursor: 'pointer', transition: 'all .2s' }}>
+             <div style={{ width: '3rem', height: '3rem', borderRadius: '50%', background: 'rgba(255,208,96,.1)', border: '1px solid rgba(255,208,96,.2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+               <span className="material-symbols-outlined" style={{ fontSize: '1.4rem', color: 'var(--o4)' }}>photo_camera</span>
+             </div>
+             <div style={{ textAlign: 'center' }}>
+               <p style={{ fontSize: '.85rem', fontWeight: 800, marginBottom: '.1rem' }}>Take Photo</p>
+               <p style={{ fontSize: '.65rem', color: 'var(--t3)' }}>Use Camera</p>
+             </div>
+           </div>
         </div>
+        
         <input type="file" ref={fileInputRef} onChange={handleFile} accept="image/*,application/pdf" style={{ display: 'none' }} />
+        <input type="file" ref={cameraInputRef} onChange={handleFile} accept="image/*" capture="environment" style={{ display: 'none' }} />
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', margin: '2rem 0' }}>
           <div style={{ flex: 1, height: '1px', background: 'var(--bdr)' }}></div>

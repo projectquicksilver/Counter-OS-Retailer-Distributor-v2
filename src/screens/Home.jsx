@@ -74,7 +74,7 @@ export const Home = () => {
                       <div>
                          <p style={{ fontSize: '.68rem', fontWeight: 600, color: 'var(--t3)', textTransform: 'uppercase', letterSpacing: '.05em' }}>Wallet Balance</p>
                          <h2 style={{ fontSize: '1.8rem', fontFamily: 'var(--fd)', fontWeight: 800, color: 'var(--t1)', display: 'flex', alignItems: 'center', gap: '.4rem' }}>
-                            ₹3,482.50
+                            ₹{walletBalance.toLocaleString('en-IN', {minimumFractionDigits: 2})}
                             <span className="material-symbols-outlined" style={{ fontSize: '1.1rem', color: 'var(--t3)', cursor: 'pointer' }}>visibility</span>
                          </h2>
                       </div>
@@ -218,38 +218,18 @@ export const Home = () => {
                    <span onClick={() => navigate('/earnings')} style={{ fontSize: '.75rem', color: 'var(--g4)', fontWeight: 700, cursor: 'pointer' }}>All →</span>
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '.5rem' }}>
-                   <div style={{ display: 'flex', alignItems: 'center', gap: '.7rem', padding: '1rem', background: 'var(--bg2)', border: '1px solid var(--bdr)', borderRadius: 'var(--r12)' }}>
-                      <div style={{ width: '2rem', height: '2rem', background: 'rgba(120,242,117,.1)', borderRadius: '.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                         <span className="material-symbols-outlined fi" style={{ fontSize: '1.1rem', color: 'var(--g4)' }}>local_shipping</span>
+                   {transactions.slice(0, 3).map((t, i) => (
+                      <div key={t.id || i} style={{ display: 'flex', alignItems: 'center', gap: '.7rem', padding: '1rem', background: 'var(--bg2)', border: '1px solid var(--bdr)', borderRadius: 'var(--r12)' }}>
+                         <div style={{ width: '2rem', height: '2rem', background: 'var(--bg3)', borderRadius: '.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                            <span className="material-symbols-outlined fi" style={{ fontSize: '1.1rem', color: t.clr }}>{t.icon || 'receipt'}</span>
+                         </div>
+                         <div style={{ flex: 1, minWidth: 0 }}>
+                            <p style={{ fontSize: '.85rem', fontWeight: 800, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{t.label}</p>
+                            <p style={{ fontSize: '.65rem', color: 'var(--t3)' }}>{t.date} · {t.sub}</p>
+                         </div>
+                         <span style={{ fontWeight: 800, fontSize: '.9rem', color: t.clr, flexShrink: 0 }}>{t.amt}</span>
                       </div>
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                         <p style={{ fontSize: '.85rem', fontWeight: 800, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>Sharma Agri Distributors</p>
-                         <p style={{ fontSize: '.65rem', color: 'var(--t3)' }}>Today, 2:30 PM</p>
-                      </div>
-                      <span style={{ fontWeight: 800, fontSize: '.9rem', color: 'var(--g4)', flexShrink: 0 }}>+₹1,180</span>
-                   </div>
-
-                   <div style={{ display: 'flex', alignItems: 'center', gap: '.7rem', padding: '1rem', background: 'var(--bg2)', border: '1px solid var(--bdr)', borderRadius: 'var(--r12)' }}>
-                      <div style={{ width: '2rem', height: '2rem', background: 'rgba(255,208,96,.1)', borderRadius: '.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                         <span className="material-symbols-outlined fi" style={{ fontSize: '1.1rem', color: 'var(--o4)' }}>storefront</span>
-                      </div>
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                         <p style={{ fontSize: '.85rem', fontWeight: 800, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>Sale to Suresh Yadav</p>
-                         <p style={{ fontSize: '.65rem', color: 'var(--t3)' }}>Today, 11:20 AM</p>
-                      </div>
-                      <span style={{ fontWeight: 800, fontSize: '.9rem', color: 'var(--o4)', flexShrink: 0 }}>+₹27</span>
-                   </div>
-
-                   <div style={{ display: 'flex', alignItems: 'center', gap: '.7rem', padding: '1rem', background: 'var(--bg2)', border: '1px solid var(--bdr)', borderRadius: 'var(--r12)' }}>
-                      <div style={{ width: '2rem', height: '2rem', background: 'rgba(255,208,96,.1)', borderRadius: '.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                         <span className="material-symbols-outlined fi" style={{ fontSize: '1.1rem', color: 'var(--o4)' }}>storefront</span>
-                      </div>
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                         <p style={{ fontSize: '.85rem', fontWeight: 800, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>Sale to Ramesh Patel</p>
-                         <p style={{ fontSize: '.65rem', color: 'var(--t3)' }}>Yesterday</p>
-                      </div>
-                      <span style={{ fontWeight: 800, fontSize: '.9rem', color: 'var(--o4)', flexShrink: 0 }}>+₹13.35</span>
-                   </div>
+                   ))}
                 </div>
              </div>
 
@@ -261,47 +241,21 @@ export const Home = () => {
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '.5rem' }}>
                    
-                   <div onClick={() => navigate('/sell')} style={{ display: 'flex', alignItems: 'center', gap: '.7rem', padding: '1rem', background: 'var(--bg2)', border: '1px solid var(--bdr)', borderRadius: 'var(--r12)', cursor: 'pointer' }}>
-                      <div style={{ width: '2.4rem', height: '2.4rem', background: 'rgba(255,208,96,.1)', borderRadius: '.65rem', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                         <span className="material-symbols-outlined fi" style={{ fontSize: '1.2rem', color: 'var(--o4)' }}>cable</span>
-                      </div>
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                         <p style={{ fontSize: '.85rem', fontWeight: 800, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>Havells 1.5mm Wire 90m</p>
-                         <p style={{ fontSize: '.65rem', color: 'var(--t3)' }}>roll · 15 in stock</p>
-                      </div>
-                      <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                         <p style={{ fontSize: '.9rem', fontWeight: 800, color: 'var(--t1)' }}>₹2100</p>
-                         <p style={{ fontSize: '.65rem', color: 'var(--g4)', fontWeight: 600 }}>earn ₹21</p>
-                      </div>
-                   </div>
-
-                   <div onClick={() => navigate('/sell')} style={{ display: 'flex', alignItems: 'center', gap: '.7rem', padding: '1rem', background: 'var(--bg2)', border: '1px solid var(--bdr)', borderRadius: 'var(--r12)', cursor: 'pointer' }}>
-                      <div style={{ width: '2.4rem', height: '2.4rem', background: 'rgba(239,68,68,.1)', borderRadius: '.65rem', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                         <span className="material-symbols-outlined fi" style={{ fontSize: '1.2rem', color: '#ef4444' }}>toggle_on</span>
-                      </div>
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                         <p style={{ fontSize: '.85rem', fontWeight: 800, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>Anchor Roma Switch</p>
-                         <p style={{ fontSize: '.65rem', color: 'var(--t3)' }}>piece · 80 in stock</p>
-                      </div>
-                      <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                         <p style={{ fontSize: '.9rem', fontWeight: 800, color: 'var(--t1)' }}>₹55</p>
-                         <p style={{ fontSize: '.65rem', color: 'var(--g4)', fontWeight: 600 }}>earn ₹0.55</p>
-                      </div>
-                   </div>
-
-                   <div onClick={() => navigate('/sell')} style={{ display: 'flex', alignItems: 'center', gap: '.7rem', padding: '1rem', background: 'var(--bg2)', border: '1px solid var(--bdr)', borderRadius: 'var(--r12)', cursor: 'pointer' }}>
-                      <div style={{ width: '2.4rem', height: '2.4rem', background: 'rgba(249,115,22,.1)', borderRadius: '.65rem', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                         <span className="material-symbols-outlined fi" style={{ fontSize: '1.2rem', color: '#f97316' }}>build</span>
-                      </div>
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                         <p style={{ fontSize: '.85rem', fontWeight: 800, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>Pidilite Fevicol 1kg</p>
-                         <p style={{ fontSize: '.65rem', color: 'var(--t3)' }}>can · 40 in stock</p>
-                      </div>
-                      <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                         <p style={{ fontSize: '.9rem', fontWeight: 800, color: 'var(--t1)' }}>₹230</p>
-                         <p style={{ fontSize: '.65rem', color: 'var(--g4)', fontWeight: 600 }}>earn ₹2.3</p>
-                      </div>
-                   </div>
+                   {inventory.slice(0, 3).map((p, i) => (
+                     <div key={p.id || i} onClick={() => navigate('/sell')} style={{ display: 'flex', alignItems: 'center', gap: '.7rem', padding: '1rem', background: 'var(--bg2)', border: '1px solid var(--bdr)', borderRadius: 'var(--r12)', cursor: 'pointer' }}>
+                        <div style={{ width: '2.4rem', height: '2.4rem', background: 'var(--bg3)', borderRadius: '.65rem', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                           <span className="material-symbols-outlined fi" style={{ fontSize: '1.2rem', color: p.clr || 'var(--o4)' }}>{p.icon || 'inventory_2'}</span>
+                        </div>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                           <p style={{ fontSize: '.85rem', fontWeight: 800, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.name}</p>
+                           <p style={{ fontSize: '.65rem', color: 'var(--t3)' }}>{p.unit} · {p.qty} in stock</p>
+                        </div>
+                        <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                           <p style={{ fontSize: '.9rem', fontWeight: 800, color: 'var(--t1)' }}>₹{p.sell}</p>
+                           <p style={{ fontSize: '.65rem', color: 'var(--g4)', fontWeight: 600 }}>earn ₹{p.earn}</p>
+                        </div>
+                     </div>
+                   ))}
 
                 </div>
              </div>

@@ -1,9 +1,12 @@
 import React from 'react';
 import { Header } from '../components/layout/Header';
+import { useNavigate } from 'react-router-dom';
 import { useAppContext } from '../context/AppContext';
 
 export const Wallet = () => {
+    const navigate = useNavigate();
     const { transactions, walletBalance } = useAppContext();
+    
     return (
         <div className="screen active" style={{ background: 'var(--bg0)' }}>
             <Header title="Wallet" backTo="/home" />
@@ -15,10 +18,10 @@ export const Wallet = () => {
                         <span style={{ fontSize: '1.5rem' }}>₹</span>{walletBalance.toLocaleString('en-IN', {minimumFractionDigits: 2})}
                     </h2>
                      <div style={{ display: 'flex', gap: '.6rem', position: 'relative', zIndex: 2 }}>
-                        <button className="btn btn-primary" style={{ flex: 1, padding: '.8rem' }}>
+                        <button onClick={() => navigate('/wallet/add')} className="btn btn-primary" style={{ flex: 1, padding: '.8rem' }}>
                             <span className="material-symbols-outlined">add</span>Add
                         </button>
-                        <button className="btn btn-ghost" style={{ flex: 1, padding: '.8rem' }}>
+                        <button onClick={() => navigate('/wallet/withdraw')} className="btn btn-ghost" style={{ flex: 1, padding: '.8rem' }}>
                             Withdraw<span className="material-symbols-outlined" style={{ fontSize: '1.1rem' }}>arrow_forward</span>
                         </button>
                     </div>

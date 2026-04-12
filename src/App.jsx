@@ -15,6 +15,8 @@ import { Invoice } from './screens/Invoice';
 import { Earnings } from './screens/Earnings';
 import { Inventory } from './screens/Inventory';
 import { Wallet } from './screens/Wallet';
+import { WalletAdd } from './screens/WalletAdd';
+import { WalletWithdraw } from './screens/WalletWithdraw';
 import { Settings } from './screens/Settings';
 import { Assistant } from './screens/Assistant';
 import { Toast } from './components/ui/Toast';
@@ -43,6 +45,8 @@ function App() {
           <Route path="/earnings" element={<Earnings />} />
           <Route path="/inventory" element={<Inventory />} />
           <Route path="/wallet" element={<Wallet />} />
+          <Route path="/wallet/add" element={<WalletAdd />} />
+          <Route path="/wallet/withdraw" element={<WalletWithdraw />} />
           <Route path="/settings" element={<Settings />} />
           <Route path="/assistant" element={<Assistant />} />
           <Route path="/sales" element={<Earnings />} /> {/* Fallback route for Khata */}

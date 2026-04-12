@@ -5,7 +5,7 @@ import { useAppContext } from '../../context/AppContext';
 
 export const Ready = () => {
   const navigate = useNavigate();
-  const { user, linkedDists } = useAppContext();
+  const { user, linkedDists, initializeAIStore } = useAppContext();
   const [welcomeMsg, setWelcomeMsg] = useState('');
   const [loading, setLoading] = useState(true);
 
@@ -50,19 +50,17 @@ export const Ready = () => {
   }, []);
 
   useEffect(() => {
+    // Generate AI products in background
+    initializeAIStore(user.cat);
+
     // Simulate AI greeting fetch
-    setTimeout(() => {
+    const tId = setTimeout(() => {
       setLoading(false);
-      const text = `Welcome ${user.name.split(' ')[0]}! Your dual-earning account is ready. Upload your first distributor invoice to earn purchase cashback, then start selling to earn sale rewards. Your Gold tier (1.75%) kicks in at ₹50,000/month.`;
-      let i = 0;
-      const iv = setInterval(() => {
-        setWelcomeMsg(prev => prev + (text[i] || ''));
-        i++;
-        if (i >= text.length) clearInterval(iv);
-      }, 16);
-      return () => clearInterval(iv);
+      setWelcomeMsg(`Welcome ${user.name.split(' ')[0]}! Your dual-earning account is ready. Upload your first distributor invoice to earn purchase cashback, then start selling to earn sale rewards. Your Gold tier (1.75%) kicks in at ₹50,000/month.`);
     }, 1500);
-  }, [user.name]);
+    
+    return () => clearTimeout(tId);
+  }, [user.name, user.cat, initializeAIStore]);
 
   return (
     <div className="screen active">

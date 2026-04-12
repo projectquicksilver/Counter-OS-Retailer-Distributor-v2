@@ -9,7 +9,7 @@ export const Assistant = () => {
   const { user, inventory, walletBalance } = useAppContext();
   
   const [messages, setMessages] = useState([
-    { role: 'ai', text: `Namaste ${user.name.split(' ')[0]}! 👋 Your wallet has **₹${walletBalance.toLocaleString('en-IN')}** this month.\n\nYou need **₹26,550 more in purchases** to unlock Diamond tier (2.5% cashback). Ask me anything!` }
+    { role: 'ai', text: `Namaste ${user.name.split(' ')[0]}! 👋 Your wallet balance is **₹${walletBalance.toLocaleString('en-IN')}**.\n\nI am CounterOS AI, your personal business advisor. I can see you have **${inventory.length}** products in stock currently. How can I help you grow today?` }
   ]);
   const [inputMsg, setInputMsg] = useState('');
   const [isTyping, setIsTyping] = useState(false);
@@ -25,15 +25,27 @@ export const Assistant = () => {
 
   const getSystemContext = () => {
     const invCount = inventory.length;
+    const invData = inventory.slice(0, 5).map(p => `- ${p.name}: ${p.qty} ${p.unit} remaining (Buy: ₹${p.buy}, Sell: ₹${p.sell}, Profit: ₹${p.earn})`).join('\n');
     const lowStock = inventory.filter(p => p.qty < 6).map(p => p.name.split(' ').slice(0,2).join(' ')).join(', ') || 'none';
-    const topProd  = [...inventory].sort((a,b) => b.earn - a.earn)[0]?.name?.split(' ').slice(0,3).join(' ') || 'N/A';
-    return `You are CounterOS, a smart business assistant for Indian retailers.
-Platform: CounterOS — dual earning system (purchase cashback + sale rewards).
-Retailer: ${user.name} | ${user.shop} | ${user.loc}
-Category: ${user.cat}
-Tier: Gold (1.75% purchase cashback) | Diamond needs ₹1,00,000/month (2.5%)
-Inventory: ${invCount} products | Low stock: ${lowStock} | Top earner: ${topProd}
-Rules: Be concise (max 80 words). Use ₹ symbols. Be specific. No generic filler advice. Sound like a smart business advisor.`;
+    const topProd = [...inventory].sort((a,b) => b.earn - a.earn)[0]?.name || 'N/A';
+    
+    return `You are CounterOS, a highly intelligent AI business advisor embedded directly into the user's point-of-sale interface in India.
+Current User Context:
+Retailer: ${user.name} | Shop: ${user.shop} | Location: ${user.loc}
+Business Category: ${user.cat}
+Wallet Balance: ₹${walletBalance}
+Inventory Count: ${invCount} products
+Low Stock Alerts: ${lowStock}
+Highest Margin Product: ${topProd}
+
+Sample Current Inventory Data:
+${invData}
+
+Rules:
+1. Act exclusively as their strategic advisor. Do not mention that you're an AI model or a language model.
+2. Structure responses cleanly with line-breaks and bold text where helpful.
+3. Your responses MUST be concise, practical, and highly specific to the provided inventory metrics and their specific business vertical. No generic filler.
+4. Calculate possible profits or restock suggestions using the data provided.`;
   };
 
   const handleSend = async (overrideMsg) => {

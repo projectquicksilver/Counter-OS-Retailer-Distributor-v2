@@ -4,14 +4,7 @@ const AppContext = createContext();
 
 const initialUser = { phone: '', name: 'Ramesh Kumar Sharma', shop: 'Ramesh Agro Traders', loc: 'Khetgaon, MP', cat: 'agri' };
 
-const initialInv = [
-  {id:1,name:'IFFCO DAP 18:46:0',    cat:'Fertilizer',unit:'50kg bag',qty:20,buy:1200,sell:1350,icon:'grass',   clr:'#78f275',earn:13.50},
-  {id:2,name:'Urea 46% N',           cat:'Fertilizer',unit:'50kg bag',qty:35,buy:240, sell:267, icon:'eco',     clr:'#a8f7a6',earn:2.67 },
-  {id:3,name:'Gromor Amino Acid 40%',cat:'Pesticide', unit:'1L bottle',qty:8, buy:280, sell:320, icon:'science',clr:'#a0d2ff',earn:3.20 },
-  {id:4,name:'Corteva Delegate 11.7%',cat:'Pesticide',unit:'250ml',   qty:5, buy:720, sell:845, icon:'biotech', clr:'#ffd060',earn:8.45 },
-  {id:5,name:'PM Kisan Hybrid Seeds',cat:'Seed',      unit:'1kg pack',qty:50,buy:150, sell:180, icon:'spa',     clr:'#86efac',earn:1.80 },
-  {id:6,name:'Chlorpyrifos 20% EC',  cat:'Pesticide', unit:'500ml',  qty:12,buy:380, sell:435, icon:'water_drop',clr:'#f9a8d4',earn:4.35},
-];
+const initialInv = [];
 
 const initialTxns = [
   {id:1, type:'purchase',label:'Sharma Agri Distributors', sub:'Invoice #SH-0891 · 5 products',date:'Today, 2:30 PM',  amt:'+₹1,180',clr:'#78f275',icon:'local_shipping'},
@@ -21,6 +14,8 @@ const initialTxns = [
   {id:5, type:'sale',    label:'Sale to Prakash Singh',     sub:'Gromor Amino × 2',             date:'Aug 9',          amt:'+₹6.40', clr:'#ffd060',icon:'storefront'},
   {id:6, type:'withdraw',label:'Withdrawal to UPI',         sub:'ramesh@okicici',               date:'Aug 8',          amt:'-₹2,000',clr:'#ef4444',icon:'send_money'},
 ];
+
+import { Intelligence } from '../services/intelligence';
 
 export const AppProvider = ({ children }) => {
   const [user, setUser] = useState(initialUser);
@@ -38,6 +33,20 @@ export const AppProvider = ({ children }) => {
 
   const toggleTheme = () => {
     setTheme(prev => (prev === 'dark' ? 'light' : 'dark'));
+  };
+
+  const initializeAIStore = async (category) => {
+    // Generate AI products based on user category
+    const parsedData = await Intelligence.generateInventory(category);
+    if (parsedData && parsedData.length > 0) {
+      setInventory(parsedData);
+    } else {
+      // Emergency fallback if Gemini fails
+      setInventory([
+        {id:1,name: category + ' Item 1', cat:'Retail',unit:'piece',qty:20,buy:100,sell:120,icon:'inventory_2',clr:'#78f275',earn:20},
+        {id:2,name: category + ' Item 2', cat:'Retail',unit:'unit',qty:15,buy:200,sell:230,icon:'inventory_2',clr:'#ffd060',earn:30}
+      ]);
+    }
   };
 
   const addToCart = (product) => {
@@ -114,7 +123,8 @@ export const AppProvider = ({ children }) => {
     linkedDists,
     setLinkedDists,
     walletBalance,
-    setWalletBalance
+    setWalletBalance,
+    initializeAIStore
   };
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
