@@ -154,6 +154,30 @@ export const Login = () => {
           
           <div style={{ display: 'flex', alignItems: 'center', gap: '.5rem', margin: '1.25rem 0 .7rem' }}>
             <div style={{ flex: 1, height: '1px', background: 'var(--bdr)' }}></div>
+            <span style={{ fontSize: '.65rem', color: 'var(--t3)', whiteSpace: 'nowrap', textTransform: 'uppercase', letterSpacing: '.1em', fontWeight: 700 }}>Or continue with</span>
+            <div style={{ flex: 1, height: '1px', background: 'var(--bdr)' }}></div>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '.8rem', marginBottom: '1.25rem' }}>
+             <button onClick={() => navigate('/setup/shop')} style={{ background: '#fff', color: '#000', border: 'none', borderRadius: 'var(--r12)', padding: '.8rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '.6rem', fontWeight: 700, fontSize: '.85rem', cursor: 'pointer', transition: 'transform .2s' }}>
+                <svg width="18" height="18" viewBox="0 0 18 18">
+                   <path fill="#4285F4" d="M17.64 9.2c0-.63-.06-1.25-.16-1.84H9v3.49h4.84c-.21 1.12-.84 2.07-1.79 2.7l2.85 2.22c1.67-1.53 2.63-3.79 2.63-6.57z"/>
+                   <path fill="#34A853" d="M9 18c2.43 0 4.47-.8 5.96-2.18l-2.85-2.22c-.79.53-1.8.85-3.11.85-2.39 0-4.41-1.61-5.14-3.77H1.03v2.32C2.51 15.96 5.52 18 9 18z"/>
+                   <path fill="#FBBC05" d="M3.86 10.68c-.19-.57-.3-1.17-.3-1.8c0-.63.11-1.23.3-1.8V4.76H1.03C.37 6.04 0 7.48 0 9s.37 2.96 1.03 4.24l2.83-2.56z"/>
+                   <path fill="#EA4335" d="M9 3.58c1.32 0 2.5.45 3.44 1.35l2.58-2.58C13.47.89 11.43 0 9 0 5.52 0 2.51 2.04 1.03 5l2.83 2.32c.73-2.16 2.75-3.74 5.14-3.74z"/>
+                </svg>
+                Google
+             </button>
+             <button onClick={() => navigate('/setup/shop')} style={{ background: '#25D366', color: '#fff', border: 'none', borderRadius: 'var(--r12)', padding: '.8rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '.6rem', fontWeight: 700, fontSize: '.85rem', cursor: 'pointer', transition: 'transform .2s' }}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                   <path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766 0-3.18-2.587-5.771-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.299.045-.677.063-1.092-.069-.252-.08-.575-.187-.988-.365-1.739-.751-2.874-2.502-2.961-2.617-.087-.116-.708-.94-.708-1.793 0-.853.448-1.273.607-1.446.159-.173.346-.217.462-.217l.332.006c.106.005.249-.04.39.298L10.74 10.4c.043.101.072.218.005.343-.067.125-.101.203-.203.321-.101.119-.213.265-.304.356-.101.101-.207.211-.089.415.118.204.524.863 1.127 1.399.777.691 1.431.906 1.635 1.008.204.102.323.086.442-.053.118-.139.505-.589.64-.789.135-.199.27-.165.454-.097.185.067 1.171.553 1.373.655.202.102.337.151.386.234.05.084.05.485-.094.89zM12 2c5.523 0 10 4.477 10 10s-4.477 10-10 10S2 17.523 2 12 6.477 2 12 2z"/>
+                </svg>
+                WhatsApp
+             </button>
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '.5rem', margin: '0 0 .7rem' }}>
+            <div style={{ flex: 1, height: '1px', background: 'var(--bdr)' }}></div>
             <span style={{ fontSize: '.65rem', color: 'var(--t3)', whiteSpace: 'nowrap', textTransform: 'uppercase', letterSpacing: '.05em', fontWeight: 600 }}>Already registered?</span>
             <div style={{ flex: 1, height: '1px', background: 'var(--bdr)' }}></div>
           </div>
@@ -162,6 +186,7 @@ export const Login = () => {
             <span className="material-symbols-outlined fi" style={{ fontSize: '1.1rem' }}>login</span>
             Sign in securely directly to Dashboard
           </button>
+
         </div>
       </div>
     </div>
