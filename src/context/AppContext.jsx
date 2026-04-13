@@ -2,12 +2,9 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 
 const AppContext = createContext();
 
-const initialUser = { phone: '', name: 'Ramesh Kumar Sharma', shop: 'Ramesh Agro Traders', loc: 'Khetgaon, MP', cat: 'agri' };
+const initialUser = { phone: '', name: 'Ramesh Kumar Sharma', shop: 'Ramesh Agro Traders', loc: 'Khetgaon, MP', cat: '' };
 
-const initialInv = [
-  {id:100, name: 'Gromor Amino Acid 40%', cat:'Agri', unit:'1L', qty:45, buy:280, sell:320, icon:'science', clr:'#78f275', earn:17, code:'P1001'},
-  {id:101, name: 'IFFCO DAP 18:46:0', cat:'Fertilizer', unit:'50kg', qty:10, buy:1200, sell:1350, icon:'agriculture', clr:'#ffd060', earn:25, code:'P1002'}
-];
+const initialInv = [];
 
 const initialTxns = [
   {id:1, type:'purchase',label:'Sharma Agri Distributors', sub:'Invoice #SH-0891 · 5 products',date:'Today, 2:30 PM',  amt:'+₹1,180',clr:'#78f275',icon:'local_shipping'},
@@ -28,6 +25,7 @@ export const AppProvider = ({ children }) => {
   const [cart, setCart] = useState([]);
   const [linkedDists, setLinkedDists] = useState([]);
   const [walletBalance, setWalletBalance] = useState(3482.50);
+  const [isSeeding, setIsSeeding] = useState(false);
 
   // Sync theme
   useEffect(() => {
@@ -38,24 +36,23 @@ export const AppProvider = ({ children }) => {
     setTheme(prev => (prev === 'dark' ? 'light' : 'dark'));
   };
 
-  const initializeAIStore = async (category) => {
+  const initializeAIStore = async (category, categoryLabel) => {
+    if (inventory.length > 0 || isSeeding) return;
+    
+    setIsSeeding(true);
     // Generate AI products based on user category
-    const parsedData = await Intelligence.generateInventory(category);
+    const label = categoryLabel || category;
+    const parsedData = await Intelligence.generateInventory(label);
+    
     if (parsedData && parsedData.length > 0) {
-      // Add a simple code for each product for demo scanning
       const withCodes = parsedData.map((p, i) => ({
         ...p,
         id: p.id || Date.now() + i,
-        code: `P${1000 + i}`
+        code: p.code || `P${1000 + i}`
       }));
       setInventory(withCodes);
-    } else {
-      // Emergency fallback if Gemini fails
-      setInventory([
-        {id:1,name: category + ' Item 1', cat:'Retail',unit:'piece',qty:20,buy:100,sell:120,icon:'inventory_2',clr:'#78f275',earn:20,code:'P1001'},
-        {id:2,name: category + ' Item 2', cat:'Retail',unit:'unit',qty:15,buy:200,sell:230,icon:'inventory_2',clr:'#ffd060',earn:30,code:'P1002'}
-      ]);
     }
+    setIsSeeding(false);
   };
 
   const addToCart = (product) => {

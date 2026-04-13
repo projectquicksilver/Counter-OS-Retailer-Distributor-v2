@@ -16,7 +16,7 @@ const CAT_CONFIG = {
 
 export const ShopSetup = () => {
   const navigate = useNavigate();
-  const { user, setUser } = useAppContext();
+  const { user, setUser, initializeAIStore } = useAppContext();
   
   const [shopName, setShopName] = useState(user.shop || '');
   const [ownerName, setOwnerName] = useState(user.name || '');
@@ -49,6 +49,11 @@ export const ShopSetup = () => {
   const handleNext = () => {
     if (!shopName) { showToast('⚠️ Enter shop name'); return; }
     if (!ownerName) { showToast('⚠️ Enter owner name'); return; }
+    
+    // Seed initial inventory in background based on category
+    const catLabel = CAT_CONFIG[category]?.label;
+    initializeAIStore(category, catLabel);
+    
     setUser(prev => ({ ...prev, shop: shopName, name: ownerName, cat: category, loc: locState.name || 'India' }));
     navigate('/setup/distributor');
   };

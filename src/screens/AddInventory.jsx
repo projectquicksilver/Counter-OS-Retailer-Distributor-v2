@@ -8,6 +8,9 @@ import { Scanner } from '../components/ui/Scanner';
 import { useAppContext } from '../context/AppContext';
 import { showToast } from '../components/ui/Toast';
 import { Intelligence } from '../services/intelligence';
+import { AIDropdown } from '../components/ui/AIDropdown';
+
+const CAT_LABELS = { agri: 'Agri Retailer', pharma: 'Pharmacy', food: 'Food & Grocery', hardware: 'Hardware & Tools', textile: 'Textile & Fashion', electronics: 'Electronics' };
 
 export const AddInventory = () => {
   const navigate = useNavigate();
@@ -20,14 +23,18 @@ export const AddInventory = () => {
   const [parsedData, setParsedData] = useState(null);
   const [parsedProducts, setParsedProducts] = useState([]);
   const fileInputRef = useRef(null);
-  const cameraInputRef = useRef(null);
-  const stepsList = ['Reading distributor details...','Scanning product list...','Extracting quantities & prices...','Calculating purchase cashback...','Finalising inventory data...'];
+  const stepsList = ['Reading distributor details...', 'Scanning product list...', 'Extracting quantities & prices...', 'Calculating purchase cashback...', 'Finalising inventory data...'];
+
+  // AI Suggestions
+  const [suggestions, setSuggestions] = useState({ products: [], categories: [], units: [] });
+  const [loadingSug, setLoadingSug] = useState(false);
+  const [loadingDefaults, setLoadingDefaults] = useState(false);
 
   // Manual States
   const [form, setForm] = useState({
     name: '',
-    cat: 'Fertilizer',
-    unit: 'kg',
+    cat: '',
+    unit: '',
     qty: '',
     buy: '',
     sell: '',
@@ -35,6 +42,31 @@ export const AddInventory = () => {
     exp: '2027-05',
     code: ''
   });
+
+  useEffect(() => {
+    if (tab === 'manual') {
+      fetchSuggestions();
+    }
+  }, [tab, user.cat]);
+
+  const fetchSuggestions = async () => {
+    setLoadingSug(true);
+    const bizLabel = CAT_LABELS[user.cat] || 'Retail';
+    const res = await Intelligence.getFormSuggestions(bizLabel);
+    if (res) setSuggestions(res);
+    setLoadingSug(false);
+  };
+
+  const handleProductSelect = async (name) => {
+    setForm(prev => ({ ...prev, name }));
+    setLoadingDefaults(true);
+    const bizLabel = CAT_LABELS[user.cat] || 'Retail';
+    const res = await Intelligence.getProductDefaults(name, bizLabel);
+    if (res) {
+      setForm(prev => ({ ...prev, cat: res.category, unit: res.unit }));
+    }
+    setLoadingDefaults(false);
+  };
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -205,35 +237,32 @@ export const AddInventory = () => {
 
           {tab === 'manual' && (
             <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-              <div>
-                <label style={{ fontSize: '.7rem', fontWeight: 800, color: 'var(--t3)', textTransform: 'uppercase', marginBottom: '.6rem', display: 'block' }}>Product Name *</label>
-                <Input 
-                  placeholder="e.g. IFFCO DAP 18:46:0" 
-                  value={form.name} 
-                  onChange={e => setForm({...form, name: e.target.value})}
-                  wrapperStyle={{ background: '#1a1a1a', border: '1.5px solid #2a2a2a', borderRadius: '12px' }}
-                  style={{ padding: '1rem' }}
-                  required 
-                />
-              </div>
+              <AIDropdown 
+                label="Product Name"
+                placeholder="Search common products..."
+                value={form.name}
+                options={suggestions.products}
+                loading={loadingSug}
+                onChange={handleProductSelect}
+              />
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                <div>
-                  <label style={{ fontSize: '.7rem', fontWeight: 800, color: 'var(--t3)', textTransform: 'uppercase', marginBottom: '.6rem', display: 'block' }}>Category</label>
-                  <Input 
-                    value={form.cat} 
-                    onChange={e => setForm({...form, cat: e.target.value})}
-                    wrapperStyle={{ background: '#1a1a1a', border: '1.5px solid #2a2a2a', borderRadius: '12px' }}
-                  />
-                </div>
-                <div>
-                  <label style={{ fontSize: '.7rem', fontWeight: 800, color: 'var(--t3)', textTransform: 'uppercase', marginBottom: '.6rem', display: 'block' }}>Unit</label>
-                  <Input 
-                    value={form.unit} 
-                    onChange={e => setForm({...form, unit: e.target.value})}
-                    wrapperStyle={{ background: '#1a1a1a', border: '1.5px solid #2a2a2a', borderRadius: '12px' }}
-                  />
-                </div>
+                <AIDropdown 
+                  label="Category"
+                  placeholder="e.g. Tablets"
+                  value={form.cat}
+                  options={suggestions.categories}
+                  loading={loadingSug || loadingDefaults}
+                  onChange={val => setForm({...form, cat: val})}
+                />
+                <AIDropdown 
+                  label="Unit"
+                  placeholder="e.g. Strip"
+                  value={form.unit}
+                  options={suggestions.units}
+                  loading={loadingSug || loadingDefaults}
+                  onChange={val => setForm({...form, unit: val})}
+                />
               </div>
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>

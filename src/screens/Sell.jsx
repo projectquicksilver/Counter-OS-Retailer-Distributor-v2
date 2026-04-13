@@ -73,7 +73,10 @@ export const Sell = () => {
                   {/* Sample Scan Button Overlay */}
                   <div style={{ position: 'absolute', top: '1rem', right: '1rem', zIndex: 5 }}>
                      <button 
-                       onClick={() => handleScan('P1001')}
+                       onClick={() => {
+                         const code = inventory[0]?.code || 'P1001';
+                         handleScan(code);
+                       }}
                        style={{ background: 'rgba(120,242,117,0.2)', backdropFilter: 'blur(5px)', border: '1px solid var(--g4)', color: 'var(--g4)', padding: '.4rem .8rem', borderRadius: '8px', fontSize: '.7rem', fontWeight: 700 }}
                      >
                        ⚡ Simulate Scan

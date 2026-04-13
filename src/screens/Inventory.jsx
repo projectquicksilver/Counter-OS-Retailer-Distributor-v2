@@ -8,7 +8,7 @@ import { showToast } from '../components/ui/Toast';
 
 export const Inventory = () => {
   const navigate = useNavigate();
-  const { inventory, addInventoryItem } = useAppContext();
+  const { inventory, addInventoryItem, isSeeding } = useAppContext();
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState('all');
 
@@ -67,11 +67,23 @@ export const Inventory = () => {
         </div>
 
         <div className="scroller" style={{ padding: '1.25rem' }}>
-          {!filtered.length ? (
+          {isSeeding ? (
+            <div style={{ textAlign: 'center', padding: '3rem 1rem' }}>
+              <span className="material-symbols-outlined aspin" style={{ fontSize: '3rem', color: 'var(--g4)' }}>sync</span>
+              <p style={{ fontWeight: 800, marginTop: '1rem', fontSize: '1.1rem' }}>Generating Stock Ledger...</p>
+              <p style={{ color: 'var(--t3)', fontSize: '.75rem', marginTop: '.4rem' }}>Optimizing inventory for your business type</p>
+            </div>
+          ) : !filtered.length ? (
             <div style={{ textAlign: 'center', padding: '3rem 1rem' }}>
               <span className="material-symbols-outlined" style={{ fontSize: '3rem', color: 'var(--t3)' }}>inventory_2</span>
-              <p style={{ color: 'var(--t2)', marginTop: '.75rem' }}>No products yet.<br/>Upload an invoice to add stock.</p>
-              <button className="btn btn-primary" onClick={() => navigate('/invoice')} style={{ marginTop: '1.1rem', width: 'auto', padding: '.7rem 1.4rem', borderRadius: 'var(--r12)' }}>Upload Invoice</button>
+              <p style={{ color: 'var(--t2)', marginTop: '.75rem' }}>No products yet.<br/>Add items manually or upload an invoice.</p>
+              <button 
+                className="btn btn-primary" 
+                onClick={() => navigate('/add-inventory')} 
+                style={{ marginTop: '1.1rem', width: 'auto', padding: '.7rem 1.4rem', borderRadius: 'var(--r12)', background: 'var(--g4)', color: '#000', border: 'none', fontWeight: 800 }}
+              >
+                Add My First Product
+              </button>
             </div>
           ) : (
              <div style={{ display: 'flex', flexDirection: 'column', gap: '.6rem', paddingBottom: '2rem' }}>
