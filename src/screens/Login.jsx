@@ -90,6 +90,7 @@ export const Login = () => {
             <div className="au d2" style={{ textAlign: 'center', marginTop: '1rem' }}>
               <h1 style={{ fontFamily: 'var(--fd)', fontSize: '2.5rem', fontWeight: 800, letterSpacing: '-.04em', lineHeight: 1.1 }}>Counter<span className="gtext">OS</span></h1>
               <p style={{ fontSize: '.8rem', color: 'var(--t2)', letterSpacing: '.14em', textTransform: 'uppercase', fontWeight: 700, marginTop: '.4rem' }}>Retailer Intelligence</p>
+              <p style={{ fontSize: '1.1rem', color: 'var(--g4)', fontWeight: 800, marginTop: '.6rem', fontStyle: 'italic', textShadow: '0 0 10px rgba(120,242,117,0.3)' }}>"Scan karo, inaam pao"</p>
             </div>
             
             <div className="au d3" style={{ display: 'flex', justifyContent: 'center', gap: '.5rem', marginTop: '1.25rem' }}>
