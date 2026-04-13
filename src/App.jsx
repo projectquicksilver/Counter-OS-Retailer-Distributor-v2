@@ -11,9 +11,9 @@ import { Home } from './screens/Home';
 import { Sell } from './screens/Sell';
 import { Cart } from './screens/Cart';
 import { Success } from './screens/Success';
-import { Invoice } from './screens/Invoice';
 import { Earnings } from './screens/Earnings';
 import { Inventory } from './screens/Inventory';
+import { AddInventory } from './screens/AddInventory';
 import { Wallet } from './screens/Wallet';
 import { WalletAdd } from './screens/WalletAdd';
 import { WalletWithdraw } from './screens/WalletWithdraw';
@@ -41,9 +41,10 @@ function App() {
           <Route path="/sell" element={<Sell />} />
           <Route path="/cart" element={<Cart />} />
           <Route path="/success" element={<Success />} />
-          <Route path="/invoice" element={<Invoice />} />
+          <Route path="/invoice" element={<AddInventory />} />
           <Route path="/earnings" element={<Earnings />} />
           <Route path="/inventory" element={<Inventory />} />
+          <Route path="/add-inventory" element={<AddInventory />} />
           <Route path="/wallet" element={<Wallet />} />
           <Route path="/wallet/add" element={<WalletAdd />} />
           <Route path="/wallet/withdraw" element={<WalletWithdraw />} />

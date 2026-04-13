@@ -4,7 +4,10 @@ const AppContext = createContext();
 
 const initialUser = { phone: '', name: 'Ramesh Kumar Sharma', shop: 'Ramesh Agro Traders', loc: 'Khetgaon, MP', cat: 'agri' };
 
-const initialInv = [];
+const initialInv = [
+  {id:100, name: 'Gromor Amino Acid 40%', cat:'Agri', unit:'1L', qty:45, buy:280, sell:320, icon:'science', clr:'#78f275', earn:17, code:'P1001'},
+  {id:101, name: 'IFFCO DAP 18:46:0', cat:'Fertilizer', unit:'50kg', qty:10, buy:1200, sell:1350, icon:'agriculture', clr:'#ffd060', earn:25, code:'P1002'}
+];
 
 const initialTxns = [
   {id:1, type:'purchase',label:'Sharma Agri Distributors', sub:'Invoice #SH-0891 · 5 products',date:'Today, 2:30 PM',  amt:'+₹1,180',clr:'#78f275',icon:'local_shipping'},
@@ -39,12 +42,18 @@ export const AppProvider = ({ children }) => {
     // Generate AI products based on user category
     const parsedData = await Intelligence.generateInventory(category);
     if (parsedData && parsedData.length > 0) {
-      setInventory(parsedData);
+      // Add a simple code for each product for demo scanning
+      const withCodes = parsedData.map((p, i) => ({
+        ...p,
+        id: p.id || Date.now() + i,
+        code: `P${1000 + i}`
+      }));
+      setInventory(withCodes);
     } else {
       // Emergency fallback if Gemini fails
       setInventory([
-        {id:1,name: category + ' Item 1', cat:'Retail',unit:'piece',qty:20,buy:100,sell:120,icon:'inventory_2',clr:'#78f275',earn:20},
-        {id:2,name: category + ' Item 2', cat:'Retail',unit:'unit',qty:15,buy:200,sell:230,icon:'inventory_2',clr:'#ffd060',earn:30}
+        {id:1,name: category + ' Item 1', cat:'Retail',unit:'piece',qty:20,buy:100,sell:120,icon:'inventory_2',clr:'#78f275',earn:20,code:'P1001'},
+        {id:2,name: category + ' Item 2', cat:'Retail',unit:'unit',qty:15,buy:200,sell:230,icon:'inventory_2',clr:'#ffd060',earn:30,code:'P1002'}
       ]);
     }
   };
@@ -73,11 +82,40 @@ export const AppProvider = ({ children }) => {
   };
 
   const addInventoryItem = (item) => {
-    setInventory(prev => [{...item, id: prev.length + 1}, ...prev]);
+    // Reward logic for inbound (distributor purchase)
+    // 0 < 5000: 0, 5000-10000: 5%, >10000: 10%
+    const purchaseTotal = Number(item.buy) * Number(item.qty);
+    let reward = 0;
+    if (purchaseTotal >= 10000) reward = purchaseTotal * 0.1;
+    else if (purchaseTotal >= 5000) reward = purchaseTotal * 0.05;
+
+    if (reward > 0) {
+      setWalletBalance(prev => prev + reward);
+      addTransaction({
+        type: 'purchase',
+        label: 'Purchase Reward',
+        sub: `Cashback on ${item.name}`,
+        date: 'Just now',
+        amt: '+₹' + reward.toFixed(0),
+        clr: '#78f275',
+        icon: 'card_giftcard'
+      });
+    }
+
+    setInventory(prev => [{
+      ...item, 
+      id: Date.now(), 
+      code: item.code || `P${1000 + prev.length}`,
+      mfg: item.mfg || '2024-06',
+      exp: item.exp || '2027-05'
+    }, ...prev]);
   };
 
-  const completeSale = (customerName, customerPhone) => {
-    const earned = +(cart.reduce((s, c) => s + c.earn * c.qty, 0) + 5).toFixed(2);
+  const completeSale = (customerName, customerPhone, usedOtp = false) => {
+    const baseEarned = cart.reduce((s, c) => s + c.earn * c.qty, 0);
+    const otpBonus = usedOtp ? 5 : 0;
+    const earned = +(baseEarned + otpBonus).toFixed(2);
+    
     const firstItem = cart[0]?.name.split(' ').slice(0, 3).join(' ') || 'Products';
     const ct = cart.reduce((s, c) => s + c.qty, 0);
     

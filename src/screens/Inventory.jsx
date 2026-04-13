@@ -4,10 +4,11 @@ import { AppLayout } from '../components/layout/AppLayout';
 import { Header } from '../components/layout/Header';
 import { useAppContext } from '../context/AppContext';
 import { Input } from '../components/ui/Input';
+import { showToast } from '../components/ui/Toast';
 
 export const Inventory = () => {
   const navigate = useNavigate();
-  const { inventory } = useAppContext();
+  const { inventory, addInventoryItem } = useAppContext();
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState('all');
 
@@ -26,9 +27,18 @@ export const Inventory = () => {
           title="Stock Ledger" 
           subtitle={`${inventory.length} products`}
           rightContent={
-            <button className="btn-icon" onClick={() => navigate('/invoice')}>
-              <span className="material-symbols-outlined">upload_file</span>
-            </button>
+            <div style={{ display: 'flex', gap: '.6rem' }}>
+              <button 
+                className="btn-icon" 
+                onClick={() => navigate('/add-inventory')}
+                style={{ background: 'rgba(120,242,117,.1)', border: '1px solid rgba(120,242,117,.3)', color: 'var(--g4)' }}
+              >
+                <span className="material-symbols-outlined">add_box</span>
+              </button>
+              <button className="btn-icon" onClick={() => navigate('/invoice')}>
+                <span className="material-symbols-outlined">upload_file</span>
+              </button>
+            </div>
           }
         />
         
@@ -88,6 +98,7 @@ export const Inventory = () => {
              </div>
           )}
         </div>
+        {/* Removed Modal */}
       </div>
     </AppLayout>
   );

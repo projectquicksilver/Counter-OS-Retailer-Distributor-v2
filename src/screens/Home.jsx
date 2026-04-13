@@ -122,7 +122,7 @@ export const Home = () => {
                          <div style={{ position: 'absolute', bottom: '-4px', right: '-4px', width: '1.2rem', height: '1.2rem', background: 'var(--g4)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#000', fontSize: '1rem', fontWeight: 800 }}>+</div>
                       </div>
                       <p style={{ fontSize: '.9rem', fontWeight: 800, marginBottom: '.3rem' }}>Add to Inventory</p>
-                      <p style={{ fontSize: '.68rem', color: 'var(--t3)', lineHeight: 1.4 }}>Upload invoice to add products</p>
+                      <p style={{ fontSize: '.68rem', color: 'var(--t3)', lineHeight: 1.4 }}>Invoice or manual product add</p>
                    </div>
                    
                    <div onClick={() => navigate('/sell')} style={{ background: 'var(--bg2)', border: '1px solid var(--bdr)', borderRadius: 'var(--r12)', padding: '1rem', cursor: 'pointer', position: 'relative' }}>
@@ -133,7 +133,7 @@ export const Home = () => {
                          </div>
                       </div>
                       <p style={{ fontSize: '.9rem', fontWeight: 800, marginBottom: '.3rem' }}>Sell a Product</p>
-                      <p style={{ fontSize: '.68rem', color: 'var(--t3)', lineHeight: 1.4 }}>Earn on every verified sale</p>
+                      <p style={{ fontSize: '.68rem', color: 'var(--t3)', lineHeight: 1.4 }}>Scan code or select from inventory</p>
                    </div>
                 </div>
 

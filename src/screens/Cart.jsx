@@ -17,7 +17,8 @@ export const Cart = () => {
   const [generatedOtp, setGeneratedOtp] = useState('');
 
   const total = cart.reduce((s, c) => s + c.sell * c.qty, 0);
-  const earned = +(cart.reduce((s, c) => s + c.earn * c.qty, 0)).toFixed(2);
+  const baseEarned = cart.reduce((s, c) => s + c.earn * c.qty, 0);
+  const earned = +(baseEarned + 5).toFixed(2); // Preview total with bonus
   const ct = cart.reduce((s, c) => s + c.qty, 0);
 
   const handleCheckout = () => {
@@ -31,7 +32,7 @@ export const Cart = () => {
 
   const handleVerifyOTP = () => {
     if (saleOtp === generatedOtp || saleOtp === '1234') {
-      const e = completeSale(custName, custPhone);
+      const e = completeSale(custName, custPhone, true);
       navigate('/success', { state: { custName, ct, total, earned: e, firstItem: cart[0]?.name }});
     } else {
       showToast(`❌ Wrong OTP. Demo code: ${generatedOtp}`);
