@@ -253,7 +253,8 @@ export const AppProvider = ({ children }) => {
       id: Date.now(), 
       code: item.code || `P${1000 + prev.length}`,
       mfg: item.mfg || '2024-06',
-      exp: item.exp || '2027-05'
+      exp: item.exp || '2027-05',
+      businessCat: item.businessCat || user.cat || 'food'
     }, ...prev]);
   };
 

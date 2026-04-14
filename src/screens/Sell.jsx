@@ -30,9 +30,21 @@ export const Sell = () => {
   // Filter inventory by user's business category AND search term
   const filteredInv = inventory.filter(p => {
     const matchesSearch = p.name.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCategory = !user.cat || p.cat === user.cat || p.name.toLowerCase().includes(user.cat.toLowerCase());
+    // Match by businessCat field (e.g., p.businessCat === 'pharma' and user.cat === 'pharma')
+    const matchesCategory = !user.cat || p.businessCat === user.cat || p.cat === user.cat;
     return matchesSearch && matchesCategory;
   });
+
+  // Debug logging for empty results
+  React.useEffect(() => {
+    if (mode === 'manual' && searchTerm === '' && filteredInv.length === 0 && inventory.length > 0) {
+      console.log('⚠️ DEBUG - No items shown in Sell manual mode:');
+      console.log('  Total inventory:', inventory.length);
+      console.log('  User category:', user.cat);
+      console.log('  First item businessCat:', inventory[0]?.businessCat);
+      console.log('  First item cat:', inventory[0]?.cat);
+    }
+  }, [mode, filteredInv.length, inventory, user.cat, searchTerm]);
 
   return (
     <AppLayout>
@@ -193,6 +205,59 @@ export const Sell = () => {
           </div>
 
         </div>
+
+        {/* Floating Cart Button with Badge - Always Visible */}
+        {cart.length > 0 && (
+          <button 
+            onClick={() => navigate('/cart')}
+            style={{
+              position: 'fixed',
+              bottom: '7rem',
+              right: '1.5rem',
+              width: '3.5rem',
+              height: '3.5rem',
+              background: 'linear-gradient(135deg, var(--g4), #5ac957)',
+              border: 'none',
+              borderRadius: '50%',
+              color: '#000',
+              fontSize: '1.3rem',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              cursor: 'pointer',
+              boxShadow: '0 8px 24px rgba(120, 242, 117, 0.36)',
+              zIndex: 999,
+              animation: 'pulse 2.5s infinite',
+              fontWeight: 800
+            }}
+            onMouseEnter={(e) => e.target.style.boxShadow = '0 12px 32px rgba(120, 242, 117, 0.5)'}
+            onMouseLeave={(e) => e.target.style.boxShadow = '0 8px 24px rgba(120, 242, 117, 0.36)'}
+            title={`View cart (${itemCount} items, ₹${total.toLocaleString('en-IN')})`}
+          >
+            <span className="material-symbols-outlined">shopping_cart</span>
+            
+            {/* Badge showing item count */}
+            <div style={{
+              position: 'absolute',
+              top: '-6px',
+              right: '-6px',
+              background: '#dc2626',
+              color: '#fff',
+              width: '1.8rem',
+              height: '1.8rem',
+              borderRadius: '50%',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '0.7rem',
+              fontWeight: 900,
+              border: '2px solid #0a0a0a',
+              boxShadow: '0 2px 8px rgba(220, 38, 38, 0.4)'
+            }}>
+              {itemCount}
+            </div>
+          </button>
+        )}
 
         {/* Footer Action */}
         <div style={{ padding: '1.25rem', borderTop: '1px solid #1a1a1a', background: '#0a0a0a', zIndex: 10 }}>

@@ -1,9 +1,11 @@
 import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { useAppContext } from '../../context/AppContext';
 
 export const BottomNav = React.memo(() => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { cart } = useAppContext();
 
   const getNavClass = (path) => {
     return `nb ${location.pathname === path ? 'active' : ''}`;
@@ -19,6 +21,29 @@ export const BottomNav = React.memo(() => {
       </button>
       <button className={getNavClass('/sell')} onClick={() => navigate('/sell')}>
         <span className="material-symbols-outlined">storefront</span>Sell
+      </button>
+      <button className={getNavClass('/cart')} onClick={() => navigate('/cart')} style={{ position: 'relative' }}>
+        <span className="material-symbols-outlined">shopping_cart</span>Cart
+        {cart.length > 0 && (
+          <div style={{
+            position: 'absolute',
+            top: '-4px',
+            right: '2px',
+            background: '#dc2626',
+            color: '#fff',
+            width: '1.2rem',
+            height: '1.2rem',
+            borderRadius: '50%',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontSize: '0.6rem',
+            fontWeight: 900,
+            border: '1px solid rgba(0,0,0,0.3)'
+          }}>
+            {cart.length > 9 ? '9+' : cart.length}
+          </div>
+        )}
       </button>
       <button className={getNavClass('/earnings')} onClick={() => navigate('/earnings')}>
         <span className="material-symbols-outlined">analytics</span>Earnings

@@ -340,7 +340,17 @@ export const Intelligence = {
       
       const res = await Intelligence.askOpenAI(prompt, "You are an inventory generator.");
       if (res?.data && Array.isArray(res.data)) {
-        return res.data.map((x, i) => ({ ...x, id: i + 1 }));
+        // Map to correct business category code
+        const catMap = {
+          'Agri Retailer': 'agri',
+          'Food & Grocery': 'food',
+          'Pharmacy': 'pharma',
+          'Hardware & Tools': 'hardware',
+          'Textile & Fashion': 'textile',
+          'Electronics': 'electronics'
+        };
+        const businessCat = catMap[category] || category.toLowerCase().substring(0, 5);
+        return res.data.map((x, i) => ({ ...x, id: i + 1, businessCat }));
       }
     } catch (e) {
       console.error('❌ Inventory Generation Error:', e.message);
@@ -374,7 +384,23 @@ export const Intelligence = {
     }
     
     console.log(`✅ Using fallback inventory for: ${fallbackKey}`);
-    return FALLBACK_INVENTORY[fallbackKey];
+    
+    // Get business category code from fallback key
+    const reverseCatMap = {
+      'Agri Retailer': 'agri',
+      'Food & Grocery': 'food',
+      'Pharmacy': 'pharma',
+      'Hardware & Tools': 'hardware',
+      'Textile & Fashion': 'textile',
+      'Electronics': 'electronics'
+    };
+    const businessCat = reverseCatMap[fallbackKey] || 'food';
+    
+    // Add businessCat field to each item
+    return FALLBACK_INVENTORY[fallbackKey].map(item => ({
+      ...item,
+      businessCat
+    }));
   },
 
   readInvoice: async (b64, mimeType = 'image/jpeg') => {

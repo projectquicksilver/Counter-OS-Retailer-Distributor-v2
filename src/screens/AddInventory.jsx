@@ -146,7 +146,8 @@ export const AddInventory = () => {
       sell: Number(form.sell),
       earn: Number((form.sell - (form.buy || form.sell*0.9)) * 0.1).toFixed(2),
       icon: 'inventory_2',
-      clr: '#78f275'
+      clr: '#78f275',
+      businessCat: user.cat || 'food'
     });
     
     showToast(`✅ ${form.name} added to inventory`);
@@ -226,7 +227,8 @@ export const AddInventory = () => {
       sell: +(p.unit_price * 1.12).toFixed(0),
       icon: 'inventory_2',
       clr: '#8a9e8a',
-      earn: +(p.unit_price * 0.01).toFixed(2)
+      earn: +(p.unit_price * 0.01).toFixed(2),
+      businessCat: user.cat || 'food'
     });
     const next = [...parsedProducts];
     next[idx].added = true;
