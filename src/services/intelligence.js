@@ -50,19 +50,19 @@ const FALLBACK_INVENTORY = {
     { id: 6, name: 'Tea Powder', cat: 'Beverages', unit: 'kg', qty: 8, buy: 320, sell: 420, icon: 'coffee', clr: '#8b4513', earn: 100 }
   ],
   'Pharmacy': [
-    { id: 1, name: 'Aspirin 500mg', cat: 'Analgesics', unit: 'strip', qty: 50, buy: 45, sell: 65, icon: 'medicine', clr: '#ff1744', earn: 20 },
+    { id: 1, name: 'Aspirin 500mg', cat: 'Analgesics', unit: 'strip', qty: 50, buy: 45, sell: 65, icon: 'pill', clr: '#ff1744', earn: 20 },
     { id: 2, name: 'Vitamin D3 1000IU', cat: 'Vitamins', unit: 'bottle', qty: 12, buy: 250, sell: 350, icon: 'health_and_safety', clr: '#ffc107', earn: 100 },
-    { id: 3, name: 'Cough Syrup 100ml', cat: 'Cough & Cold', unit: 'bottle', qty: 20, buy: 85, sell: 130, icon: 'local_pharmacy', clr: '#e91e63', earn: 45 },
+    { id: 3, name: 'Cough Syrup 100ml', cat: 'Cough & Cold', unit: 'bottle', qty: 20, buy: 85, sell: 130, icon: 'pharmacy', clr: '#e91e63', earn: 45 },
     { id: 4, name: 'Glucose Biscuits', cat: 'Nutrition', unit: 'pack', qty: 30, buy: 35, sell: 50, icon: 'restaurant', clr: '#ff9800', earn: 15 },
-    { id: 5, name: 'First Aid Kit', cat: 'First Aid', unit: 'kit', qty: 5, buy: 450, sell: 650, icon: 'first_aid', clr: '#f44336', earn: 200 },
-    { id: 6, name: 'Hand Sanitizer 500ml', cat: 'Hygiene', unit: 'bottle', qty: 25, buy: 80, sell: 120, icon: 'clean_hands', clr: '#2196f3', earn: 40 }
+    { id: 5, name: 'First Aid Kit', cat: 'First Aid', unit: 'kit', qty: 5, buy: 450, sell: 650, icon: 'medical_services', clr: '#f44336', earn: 200 },
+    { id: 6, name: 'Hand Sanitizer 500ml', cat: 'Hygiene', unit: 'bottle', qty: 25, buy: 80, sell: 120, icon: 'water_drop', clr: '#2196f3', earn: 40 }
   ],
   'Hardware & Tools': [
-    { id: 1, name: 'Hammer 500g', cat: 'Hand Tools', unit: 'piece', qty: 25, buy: 120, sell: 180, icon: 'construction', clr: '#ff6b35', earn: 60 },
-    { id: 2, name: 'Drill Impact 18V', cat: 'Power Tools', unit: 'piece', qty: 5, buy: 2500, sell: 3500, icon: 'settings', clr: '#004e89', earn: 1000 },
+    { id: 1, name: 'Hammer 500g', cat: 'Hand Tools', unit: 'piece', qty: 25, buy: 120, sell: 180, icon: 'build', clr: '#ff6b35', earn: 60 },
+    { id: 2, name: 'Drill Impact 18V', cat: 'Power Tools', unit: 'piece', qty: 5, buy: 2500, sell: 3500, icon: 'handyman', clr: '#004e89', earn: 1000 },
     { id: 3, name: 'Paint Brush Set', cat: 'Painting', unit: 'set', qty: 15, buy: 280, sell: 420, icon: 'palette', clr: '#f77f00', earn: 140 },
-    { id: 4, name: 'Wood Nails (1kg)', cat: 'Fasteners', unit: 'pack', qty: 30, buy: 80, sell: 140, icon: 'push_pin', clr: '#666', earn: 60 },
-    { id: 5, name: 'Safety Gloves (10 pair)', cat: 'Safety', unit: 'pack', qty: 20, buy: 150, sell: 250, icon: 'pan_tool', clr: '#06a77d', earn: 100 },
+    { id: 4, name: 'Wood Nails (1kg)', cat: 'Fasteners', unit: 'pack', qty: 30, buy: 80, sell: 140, icon: 'thumb_tack', clr: '#666', earn: 60 },
+    { id: 5, name: 'Safety Gloves (10 pair)', cat: 'Safety', unit: 'pack', qty: 20, buy: 150, sell: 250, icon: 'safety_check', clr: '#06a77d', earn: 100 },
     { id: 6, name: 'Tape Measure 5M', cat: 'Measuring', unit: 'piece', qty: 12, buy: 180, sell: 280, icon: 'straighten', clr: '#ffd60a', earn: 100 }
   ],
   'Textile & Fashion': [
@@ -70,7 +70,7 @@ const FALLBACK_INVENTORY = {
     { id: 2, name: 'Denim Jeans', cat: 'Jeans', unit: 'piece', qty: 20, buy: 450, sell: 750, icon: 'checkroom', clr: '#1d3557', earn: 300 },
     { id: 3, name: 'Silk Saree', cat: 'Traditional', unit: 'piece', qty: 8, buy: 1200, sell: 2000, icon: 'checkroom', clr: '#f1854a', earn: 800 },
     { id: 4, name: 'Cotton Bedsheet', cat: 'Bedding', unit: 'piece', qty: 25, buy: 280, sell: 450, icon: 'hotel', clr: '#9d84b7', earn: 170 },
-    { id: 5, name: 'Casual Shoes', cat: 'Footwear', unit: 'pair', qty: 15, buy: 320, sell: 550, icon: 'directions_walk', clr: '#8b4513', earn: 230 },
+    { id: 5, name: 'Casual Shoes', cat: 'Footwear', unit: 'pair', qty: 15, buy: 320, sell: 550, icon: 'woman_2', clr: '#8b4513', earn: 230 },
     { id: 6, name: 'Scarf Collection', cat: 'Scarves', unit: 'piece', qty: 40, buy: 80, sell: 180, icon: 'checkroom', clr: '#d4d4d4', earn: 100 }
   ],
   'Electronics': [
