@@ -1,6 +1,6 @@
 import React from 'react';
 
-export const Button = ({ children, variant = 'primary', className = '', ...props }) => {
+export const Button = React.memo(({ children, variant = 'primary', className = '', ...props }) => {
   const baseClass = 'btn';
   const variantClass = variant ? `btn-${variant}` : '';
   return (
@@ -8,12 +8,16 @@ export const Button = ({ children, variant = 'primary', className = '', ...props
       {children}
     </button>
   );
-};
+});
 
-export const IconButton = ({ children, className = '', isBack = false, ...props }) => {
+Button.displayName = 'Button';
+
+export const IconButton = React.memo(({ children, className = '', isBack = false, ...props }) => {
   return (
     <button className={`${isBack ? 'btn-back' : 'btn-icon'} ${className}`} {...props}>
       {children}
     </button>
   );
-};
+});
+
+IconButton.displayName = 'IconButton';

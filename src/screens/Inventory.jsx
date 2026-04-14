@@ -8,9 +8,10 @@ import { showToast } from '../components/ui/Toast';
 
 export const Inventory = () => {
   const navigate = useNavigate();
-  const { inventory, addInventoryItem, isSeeding } = useAppContext();
+  const { inventory, user, addInventoryItem, isSeeding } = useAppContext();
   const [search, setSearch] = useState('');
-  const [filter, setFilter] = useState('all');
+  // Filter by user's business category by default
+  const [filter, setFilter] = useState(user.cat || 'all');
 
   const categories = ['all', ...new Set(inventory.map(p => p.cat))];
   
@@ -25,7 +26,7 @@ export const Inventory = () => {
       <div className="screen active">
         <Header 
           title="Stock Ledger" 
-          subtitle={`${inventory.length} products`}
+          subtitle={`${filtered.length}/${inventory.length} products · ${user.cat ? `🏷️ ${user.cat}` : 'All categories'}`}
           rightContent={
             <div style={{ display: 'flex', gap: '.6rem' }}>
               <button 

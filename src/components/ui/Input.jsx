@@ -1,6 +1,6 @@
 import React from 'react';
 
-export const Input = ({ label, className = '', wrapperClass = '', suffix, prefix, ...props }) => {
+export const Input = React.memo(({ label, className = '', wrapperClass = '', suffix, prefix, ...props }) => {
   return (
     <div className={wrapperClass}>
       {label && <label className="ilabel">{label}</label>}
@@ -15,9 +15,11 @@ export const Input = ({ label, className = '', wrapperClass = '', suffix, prefix
       </div>
     </div>
   );
-};
+});
 
-export const OtpInput = ({ length = 4, onChange, value = '' }) => {
+Input.displayName = 'Input';
+
+export const OtpInput = React.memo(({ length = 4, onChange, value = '' }) => {
   const handleChange = (e, index) => {
     const val = e.target.value;
     const newVal = value.split('');
@@ -45,4 +47,6 @@ export const OtpInput = ({ length = 4, onChange, value = '' }) => {
       ))}
     </div>
   );
-};
+});
+
+OtpInput.displayName = 'OtpInput';

@@ -1,25 +1,58 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAppContext } from '../context/AppContext';
 import { AppLayout } from '../components/layout/AppLayout';
+import { Intelligence } from '../services/intelligence';
+import { ErrorLogger } from '../services/errorLogger';
 
 const WEEK_DATA = [
   {day:'Mon',purchase:320,sale:120},{day:'Tue',purchase:580,sale:190},{day:'Wed',purchase:240,sale:95},
   {day:'Thu',purchase:920,sale:310},{day:'Fri',purchase:1180,sale:420},{day:'Sat',purchase:680,sale:230},{day:'Sun',purchase:180,sale:60}
 ];
 
-export const Home = () => {
+export const Home = React.memo(() => {
   const navigate = useNavigate();
   const { user, walletBalance, inventory, transactions, theme, toggleTheme } = useAppContext();
   const [insight, setInsight] = useState('');
   const [loadingInsight, setLoadingInsight] = useState(true);
+  const [insightError, setInsightError] = useState(false);
+
+  // Memoized insight generation
+  const generateInsight = useCallback(async () => {
+    try {
+      setLoadingInsight(true);
+      setInsightError(false);
+      
+      // Generate AI insight with timeout
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('Insight generation timeout')), 8000)
+      );
+
+      const prompt = `Based on this inventory data, give ONE specific, actionable business insight (max 2 sentences, casual tone, with emoji):
+Inventory: ${inventory.slice(0, 3).map(p => `${p.name} (${p.qty} left)`).join(', ')}
+Wallet: ₹${walletBalance}`;
+
+      const insightPromise = Intelligence.ask(prompt, 'You are a retail business advisor.');
+      const result = await Promise.race([insightPromise, timeoutPromise]);
+
+      if (result && result.trim()) {
+        setInsight(result);
+      } else {
+        throw new Error('Empty insight response');
+      }
+    } catch (error) {
+      ErrorLogger.logAIError('HomeInsights', error);
+      setInsightError(true);
+      // Set a default insight
+      setInsight('Reorder Corteva Delegate now — only 5 units left and it earns ₹8.45/unit. A ₹26,550 purchase from your distributor this month unlocks Diamond tier (2.5% cashback) worth an extra ₹1,800+ annually.');
+    } finally {
+      setLoadingInsight(false);
+    }
+  }, [inventory, walletBalance]);
 
   useEffect(() => {
-    setTimeout(() => {
-      setLoadingInsight(false);
-      setInsight('Reorder Corteva Delegate now — only 5 units left and it earns ₹8.45/unit. A ₹26,550 purchase from your distributor this month unlocks Diamond tier (2.5% cashback) worth an extra ₹1,800+ annually.');
-    }, 1200);
-  }, []);
+    generateInsight();
+  }, [generateInsight]);
 
   const maxVal = Math.max(...WEEK_DATA.map(d => d.purchase + d.sale));
   const fname = user.name.split(' ')[0] || 'Ramesh';
@@ -265,4 +298,6 @@ export const Home = () => {
       </div>
     </AppLayout>
   );
-};
+});
+
+Home.displayName = 'Home';

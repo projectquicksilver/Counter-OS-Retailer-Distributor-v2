@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AppLayout } from '../components/layout/AppLayout';
 import { Header } from '../components/layout/Header';
@@ -8,6 +8,7 @@ import { Scanner } from '../components/ui/Scanner';
 import { useAppContext } from '../context/AppContext';
 import { showToast } from '../components/ui/Toast';
 import { Intelligence } from '../services/intelligence';
+import { ErrorLogger } from '../services/errorLogger';
 import { AIDropdown } from '../components/ui/AIDropdown';
 
 const CAT_LABELS = { agri: 'Agri Retailer', pharma: 'Pharmacy', food: 'Food & Grocery', hardware: 'Hardware & Tools', textile: 'Textile & Fashion', electronics: 'Electronics' };
@@ -29,6 +30,7 @@ export const AddInventory = () => {
   const [suggestions, setSuggestions] = useState({ products: [], categories: [], units: [] });
   const [loadingSug, setLoadingSug] = useState(false);
   const [loadingDefaults, setLoadingDefaults] = useState(false);
+  const [userCategory, setUserCategory] = useState(user.cat || 'food'); // Fallback to food
 
   // Manual States
   const [form, setForm] = useState({
@@ -43,30 +45,95 @@ export const AddInventory = () => {
     code: ''
   });
 
+  // Initialize userCategory with user.cat on component mount
   useEffect(() => {
-    if (tab === 'manual') {
+    if (!userCategory && user.cat) {
+      console.log(`📁 Initializing userCategory from user.cat: ${user.cat} → ${CAT_LABELS[user.cat]}`);
+      setUserCategory(user.cat);
+    }
+  }, []);
+
+  // Monitor user.cat changes from context - MUST run first to set userCategory
+  useEffect(() => {
+    if (user.cat && user.cat !== userCategory) {
+      console.log(`📁 User category updated: ${user.cat} → ${CAT_LABELS[user.cat]}`);
+      setUserCategory(user.cat);
+    }
+  }, [user.cat]);
+
+  // Fetch suggestions whenever tab or user category changes
+  useEffect(() => {
+    if (tab === 'manual' && userCategory) {
+      console.log(`📊 Tab 'manual' active, fetching suggestions for: ${userCategory}`);
       fetchSuggestions();
     }
-  }, [tab, user.cat]);
+  }, [tab, userCategory]);
 
-  const fetchSuggestions = async () => {
-    setLoadingSug(true);
-    const bizLabel = CAT_LABELS[user.cat] || 'Retail';
-    const res = await Intelligence.getFormSuggestions(bizLabel);
-    if (res) setSuggestions(res);
-    setLoadingSug(false);
-  };
-
-  const handleProductSelect = async (name) => {
-    setForm(prev => ({ ...prev, name }));
-    setLoadingDefaults(true);
-    const bizLabel = CAT_LABELS[user.cat] || 'Retail';
-    const res = await Intelligence.getProductDefaults(name, bizLabel);
-    if (res) {
-      setForm(prev => ({ ...prev, cat: res.category, unit: res.unit }));
+  const fetchSuggestions = useCallback(async () => {
+    if (!userCategory) {
+      console.warn('⚠️ No userCategory set, using fallback');
+      setSuggestions({
+        products: Intelligence.getFallbackProducts('food'),
+        categories: Intelligence.getFallbackCategories('food'),
+        units: Intelligence.getFallbackUnits('food')
+      });
+      return;
     }
-    setLoadingDefaults(false);
-  };
+
+    try {
+      setLoadingSug(true);
+      const bizLabel = CAT_LABELS[userCategory] || CAT_LABELS['food'];
+      console.log(`🔄 Fetching suggestions for: ${bizLabel} (category: ${userCategory})`);
+      
+      const res = await Intelligence.getFormSuggestions(bizLabel);
+      if (res && res.products && res.products.length > 0) {
+        console.log(`✅ Got ${res.products.length} suggestions: ${res.products.slice(0, 3).join(', ')}...`);
+        setSuggestions(res);
+      } else {
+        throw new Error('Empty suggestions received');
+      }
+    } catch (error) {
+      console.error('❌ Error fetching suggestions:', error.message);
+      console.log(`📦 Using fallback products for ${userCategory}`);
+      
+      // Set fallback suggestions for the category
+      const fallbackProds = Intelligence.getFallbackProducts(userCategory);
+      const fallbackCats = Intelligence.getFallbackCategories(userCategory);
+      const fallbackUnits = Intelligence.getFallbackUnits(userCategory);
+      
+      console.log(`📦 Fallback products: ${fallbackProds.slice(0, 3).join(', ')}...`);
+      
+      setSuggestions({
+        products: fallbackProds,
+        categories: fallbackCats,
+        units: fallbackUnits
+      });
+      
+      ErrorLogger.logError(error, { context: 'fetchSuggestions', category: userCategory, fallbackUsed: true });
+    } finally {
+      setLoadingSug(false);
+    }
+  }, [userCategory]);
+
+  const handleProductSelect = useCallback(async (name) => {
+    try {
+      setForm(prev => ({ ...prev, name }));
+      setLoadingDefaults(true);
+      const bizLabel = CAT_LABELS[userCategory] || CAT_LABELS['food'];
+      console.log(`⚙️ Getting defaults for: ${name} in ${bizLabel}`);
+      
+      const res = await Intelligence.getProductDefaults(name, bizLabel);
+      if (res) {
+        setForm(prev => ({ ...prev, cat: res.category, unit: res.unit }));
+        console.log(`✅ Defaults: category=${res.category}, unit=${res.unit}`);
+      }
+    } catch (error) {
+      ErrorLogger.logError(error, { context: 'handleProductSelect', productName: name });
+      console.error('❌ Error getting product defaults:', error);
+    } finally {
+      setLoadingDefaults(false);
+    }
+  }, [userCategory]);
 
   const handleSubmit = (e) => {
     e.preventDefault();

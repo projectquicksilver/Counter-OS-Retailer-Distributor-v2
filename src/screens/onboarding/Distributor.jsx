@@ -5,13 +5,45 @@ import { Input } from '../../components/ui/Input';
 import { showToast } from '../../components/ui/Toast';
 import { useAppContext } from '../../context/AppContext';
 import { Intelligence } from '../../services/intelligence';
+import { ErrorLogger } from '../../services/errorLogger';
 
-const FALLBACK_DISTS = [
-  {id: 1, name:'Sharma Agri Distributors',city:'Indore',products:['Fertilizers','Seeds'],rating:4.7,distance:12,emoji:'🌾'},
-  {id: 2, name:'MP Krishi Vaahan Pvt Ltd',city:'Bhopal',products:['Agri Chemicals'],rating:4.3,distance:28,emoji:'🚜'},
-  {id: 3, name:'Jain Agro Chemicals',city:'Khetgaon',products:['Pesticides'],rating:4.5,distance:5,emoji:'🧪'},
-  {id: 4, name:'Rajhans Fertilizers',city:'Ujjain',products:['Fertilizers'],rating:4.2,distance:35,emoji:'🌱'},
-];
+// Instant fallback distributors - shown immediately
+const getFallbackDistributors = (category) => {
+  const categoryMap = {
+    agri: [
+      {id: 1, name:'Sharma Agri Distributors',city:'Indore',products:['Fertilizers','Seeds'],rating:4.7,distance:12,emoji:'🌾'},
+      {id: 2, name:'MP Krishi Vaahan Pvt Ltd',city:'Bhopal',products:['Agri Chemicals'],rating:4.3,distance:28,emoji:'🚜'},
+      {id: 3, name:'Jain Agro Chemicals',city:'Khetgaon',products:['Pesticides'],rating:4.5,distance:5,emoji:'🧪'},
+    ],
+    food: [
+      {id: 1, name:'Metro Wholesale Mart',city:'Indore',products:['Rice','Oils'],rating:4.6,distance:8,emoji:'🍚'},
+      {id: 2, name:'Central Food Distributors',city:'Khetgaon',products:['Groceries','Spices'],rating:4.4,distance:3,emoji:'🍱'},
+      {id: 3, name:'Premium Grains Trading',city:'Ujjain',products:['Wheat','Pulses'],rating:4.5,distance:32,emoji:'🌾'},
+    ],
+    pharma: [
+      {id: 1, name:'Medline Pharma Distributors',city:'Indore',products:['Medicines','Supplements'],rating:4.7,distance:10,emoji:'💊'},
+      {id: 2, name:'HealthCare Plus Distribution',city:'Khetgaon',products:['Medicines','Medical Devices'],rating:4.5,distance:4,emoji:'🏥'},
+      {id: 3, name:'Arogya Pharmaceutical',city:'Bhopal',products:['Medicines','Vitamins'],rating:4.6,distance:26,emoji:'⚕️'},
+    ],
+    hardware: [
+      {id: 1, name:'BuildRight Hardware',city:'Indore',products:['Tools','Materials'],rating:4.5,distance:11,emoji:'🔧'},
+      {id: 2, name:'Constructor Supply House',city:'Khetgaon',products:['Building Materials'],rating:4.4,distance:6,emoji:'🏗️'},
+      {id: 3, name:'Industrial Tools India',city:'Ujjain',products:['Power Tools','Hardware'],rating:4.6,distance:34,emoji:'⚙️'},
+    ],
+    textile: [
+      {id: 1, name:'Fashion Fabric House',city:'Indore',products:['Fabrics','Textiles'],rating:4.7,distance:9,emoji:'👗'},
+      {id: 2, name:'Cotton Kingdom Distributors',city:'Khetgaon',products:['Fabrics','Threads'],rating:4.5,distance:5,emoji:'🧵'},
+      {id: 3, name:'Apparel Wholesale Market',city:'Ujjain',products:['Garments','Fabrics'],rating:4.6,distance:31,emoji:'👕'},
+    ],
+    electronics: [
+      {id: 1, name:'TechHub Distributors',city:'Indore',products:['Electronics','Accessories'],rating:4.8,distance:7,emoji:'📱'},
+      {id: 2, name:'Digital Paradise Wholesale',city:'Khetgaon',products:['Electronics','Gadgets'],rating:4.6,distance:4,emoji:'💻'},
+      {id: 3, name:'Cyber Solutions Trading',city:'Bhopal',products:['Components','Accessories'],rating:4.5,distance:25,emoji:'🔌'},
+    ],
+  };
+
+  return categoryMap[category] || categoryMap.food;
+};
 
 export const Distributor = () => {
   const navigate = useNavigate();
@@ -21,20 +53,46 @@ export const Distributor = () => {
   const [search, setSearch] = useState('');
 
   useEffect(() => {
-    const fetchDynamicDists = async () => {
-      setLoading(true);
-      const prompt = `Return a JSON array of 3 realistic dummy wholesale distributors for a "${user.cat}" business in India. Include fields: id (number), name (string), city (string), products (array of 2 strings), rating (number like 4.5), distance (number), emoji (string).`;
-      
-      const res = await Intelligence.askJSON(prompt);
-      if (res && Array.isArray(res) && res.length > 0) {
-        setDists(res);
-      } else {
-        setDists(FALLBACK_DISTS);
-      }
-      setLoading(false);
-    };
+    // Show instant fallback
+    const instant = getFallbackDistributors(user.cat);
+    setDists(instant);
+    console.log(`📦 Showing instant fallback: ${instant.length} distributors for ${user.cat}`);
+    setLoading(false);
     
-    fetchDynamicDists();
+    // Try to fetch dynamic distributors in background
+    const fetchDynamic = async () => {
+      console.log(`🌐 Attempting to fetch dynamic distributors for ${user.cat}...`);
+      try {
+        const prompt = `Return a JSON array of 3 wholesale distributors for a "${user.cat}" business in India near Khetgaon, MP. Return ONLY valid JSON array: [{"id":1,"name":"...","city":"...","products":[...],"rating":4.5,"distance":10,"emoji":"🏪"}]. Ensure all fields exist and are properly formatted.`;
+        
+        // Try OpenAI with timeout
+        const timeoutPromise = new Promise((_, reject) =>
+          setTimeout(() => reject(new Error('Timeout')), 5000)
+        );
+        
+        const res = await Promise.race([
+          Intelligence.askOpenAI(prompt, "You are a distributor database expert. Return ONLY valid JSON."),
+          timeoutPromise
+        ]);
+
+        if (res && Array.isArray(res) && res.length > 0) {
+          // Validate response has required fields
+          const valid = res.every(r => r.id && r.name && r.city && r.products && r.rating && r.distance);
+          if (valid) {
+            console.log(`✅ Got ${res.length} dynamic distributors, replacing fallback`);
+            setDists(res);
+            return;
+          }
+        }
+      } catch (error) {
+        console.log(`⚠️ Dynamic fetch failed: ${error.message}, keeping fallback`);
+        ErrorLogger.logError(error, { context: 'Distributor fetch', category: user.cat });
+      }
+      
+      console.log(`📦 Keeping instant fallback`);
+    };
+
+    fetchDynamic();
   }, [user.cat]);
 
   const toggleLink = (dist) => {
@@ -90,16 +148,10 @@ export const Distributor = () => {
         />
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '.6rem', marginBottom: '2rem' }}>
-          {loading ? (
-            [1,2,3].map(i => (
-              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '.8rem', padding: '.8rem 1rem', background: 'var(--bg2)', border: '1px solid var(--bdr)', borderRadius: 'var(--r8)' }}>
-                <div className="skel" style={{ width: '2.75rem', height: '2.75rem', borderRadius: 'var(--r6)', flexShrink: 0 }}></div>
-                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '.38rem' }}>
-                  <div className="skel" style={{ height: '.85rem', width: '60%' }}></div>
-                  <div className="skel" style={{ height: '.72rem', width: '40%' }}></div>
-                </div>
-              </div>
-            ))
+          {filtered.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: '2rem 1rem', color: 'var(--t3)' }}>
+              <p style={{ fontSize: '.85rem' }}>No distributors found</p>
+            </div>
           ) : (
             filtered.map((d, i) => {
               const isLinked = linkedDists.some(x => x.id === d.id);

@@ -58,18 +58,27 @@ Rules:
     setMessages(prev => [...prev, { role: 'user', text: msgOut }]);
     setIsTyping(true);
 
-    const promptText = messages.length === 1 ? `${getSystemContext()}\n\nUser question: ${msgOut}` : msgOut;
+    const systemCtx = getSystemContext();
+    const promptText = messages.length === 1 ? `${systemCtx}\n\nUser question: ${msgOut}` : msgOut;
     
-    const reply = await Intelligence.ask(promptText, messages.length > 1 ? getSystemContext() : null);
+    // Use OpenAI directly for dynamic responses
+    console.log('📡 Processing:', msgOut);
+    const reply = await Intelligence.askOpenAIText(promptText, systemCtx);
     
     setIsTyping(false);
     if (reply) {
+      console.log('✅ Got dynamic AI response from OpenAI API');
       setMessages(prev => [...prev, { role: 'ai', text: reply }]);
     } else {
-      // Fallback
-      setMessages(prev => [...prev, { role: 'ai', text: "I'm having trouble connecting to the network right now. But looking at your data: you have some low stock items to restock!" }]);
+      console.log('⚠️ OpenAI unavailable - Using smart fallback (varied)');
+      console.log('💡 TIP: To enable OpenAI, add VITE_OPENAI_API_KEY=sk-... in .env file');
+      // Fallback generates VARIED responses based on data patterns
+      const fallback = Intelligence.analyzeBusinessData(systemCtx);
+      setMessages(prev => [...prev, { role: 'ai', text: fallback }]);
     }
   };
+
+
 
   return (
     <div className="screen active" style={{ background: 'var(--bg1)' }}>

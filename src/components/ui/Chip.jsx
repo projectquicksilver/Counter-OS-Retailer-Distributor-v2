@@ -1,15 +1,17 @@
 import React from 'react';
 
-export const Chip = ({ children, variant = 'dim', className = '', ...props }) => {
+export const Chip = React.memo(({ children, variant = 'dim', className = '', ...props }) => {
   const variantClass = variant ? `chip-${variant}` : '';
   return (
     <div className={`chip ${variantClass} ${className}`} {...props}>
       {children}
     </div>
   );
-};
+});
 
-export const TierBadge = ({ tier = 'bronze' }) => {
+Chip.displayName = 'Chip';
+
+export const TierBadge = React.memo(({ tier = 'bronze' }) => {
   const tierConfig = {
     bronze: { label: 'Bronze', emoji: '🥉' },
     silver: { label: 'Silver', emoji: '🥈' },
@@ -22,4 +24,6 @@ export const TierBadge = ({ tier = 'bronze' }) => {
       {config.emoji} {config.label} Tier
     </div>
   );
-};
+});
+
+TierBadge.displayName = 'TierBadge';

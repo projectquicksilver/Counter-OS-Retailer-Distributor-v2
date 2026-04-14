@@ -7,7 +7,7 @@ import { Scanner } from '../components/ui/Scanner';
 
 export const Sell = () => {
   const navigate = useNavigate();
-  const { inventory, cart, addToCart, clearCart } = useAppContext();
+  const { inventory, user, cart, addToCart, clearCart } = useAppContext();
   const [scannedItem, setScannedItem] = useState(null);
   const [mode, setMode] = useState('scan'); // 'scan' or 'manual'
   const [searchTerm, setSearchTerm] = useState('');
@@ -27,7 +27,12 @@ export const Sell = () => {
     }
   };
 
-  const filteredInv = inventory.filter(p => p.name.toLowerCase().includes(searchTerm.toLowerCase()));
+  // Filter inventory by user's business category AND search term
+  const filteredInv = inventory.filter(p => {
+    const matchesSearch = p.name.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesCategory = !user.cat || p.cat === user.cat || p.name.toLowerCase().includes(user.cat.toLowerCase());
+    return matchesSearch && matchesCategory;
+  });
 
   return (
     <AppLayout>

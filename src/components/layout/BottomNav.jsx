@@ -1,7 +1,7 @@
 import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 
-export const BottomNav = () => {
+export const BottomNav = React.memo(() => {
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -28,4 +28,6 @@ export const BottomNav = () => {
       </button>
     </div>
   );
-};
+});
+
+BottomNav.displayName = 'BottomNav';

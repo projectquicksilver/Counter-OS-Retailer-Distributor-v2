@@ -2,7 +2,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { IconButton } from '../ui/Button';
 
-export const Header = ({ title, subtitle, backTo, rightContent }) => {
+export const Header = React.memo(({ title, subtitle, backTo, rightContent }) => {
   const navigate = useNavigate();
 
   return (
@@ -23,4 +23,6 @@ export const Header = ({ title, subtitle, backTo, rightContent }) => {
       </div>
     </div>
   );
-};
+});
+
+Header.displayName = 'Header';
