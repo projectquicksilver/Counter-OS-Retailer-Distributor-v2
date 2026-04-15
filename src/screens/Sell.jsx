@@ -4,6 +4,7 @@ import { AppLayout } from '../components/layout/AppLayout';
 import { useAppContext } from '../context/AppContext';
 import { showToast } from '../components/ui/Toast';
 import { Scanner } from '../components/ui/Scanner';
+import { ProductIcon } from '../components/ui/ProductIcon';
 
 export const Sell = () => {
   const navigate = useNavigate();
@@ -139,7 +140,7 @@ export const Sell = () => {
                       <div key={p.id} onClick={() => { addToCart(p); setScannedItem(p); setTimeout(()=>setScannedItem(null), 2000); }} style={{ padding: '1rem', background: '#111', border: '1px solid #1a1a1a', borderRadius: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                            <div style={{ width: '2.5rem', height: '2.5rem', background: '#1a1a1a', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                              <span className="material-symbols-outlined" style={{ color: p.clr || 'var(--o4)', fontSize: '1.2rem' }}>{p.icon || 'inventory_2'}</span>
+                              <ProductIcon product={p} fontSize="1.2rem" />
                            </div>
                            <div>
                               <p style={{ fontWeight: 800, fontSize: '0.9rem' }}>{p.name}</p>

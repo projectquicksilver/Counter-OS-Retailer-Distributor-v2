@@ -4,6 +4,7 @@ import { useAppContext } from '../context/AppContext';
 import { AppLayout } from '../components/layout/AppLayout';
 import { Intelligence } from '../services/intelligence';
 import { ErrorLogger } from '../services/errorLogger';
+import { ProductIcon } from '../components/ui/ProductIcon';
 
 const WEEK_DATA = [
   {day:'Mon',purchase:320,sale:120},{day:'Tue',purchase:580,sale:190},{day:'Wed',purchase:240,sale:95},
@@ -277,7 +278,7 @@ Wallet: ₹${walletBalance}`;
                    {inventory.slice(0, 3).map((p, i) => (
                      <div key={p.id || i} onClick={() => navigate('/sell')} style={{ display: 'flex', alignItems: 'center', gap: '.7rem', padding: '1rem', background: 'var(--bg2)', border: '1px solid var(--bdr)', borderRadius: 'var(--r12)', cursor: 'pointer' }}>
                         <div style={{ width: '2.4rem', height: '2.4rem', background: 'var(--bg3)', borderRadius: '.65rem', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                           <span className="material-symbols-outlined fi" style={{ fontSize: '1.2rem', color: p.clr || 'var(--o4)' }}>{p.icon || 'inventory_2'}</span>
+                           <ProductIcon product={p} fontSize="1.2rem" />
                         </div>
                         <div style={{ flex: 1, minWidth: 0 }}>
                            <p style={{ fontSize: '.85rem', fontWeight: 800, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.name}</p>

@@ -5,6 +5,7 @@ import { Header } from '../components/layout/Header';
 import { useAppContext } from '../context/AppContext';
 import { Input } from '../components/ui/Input';
 import { showToast } from '../components/ui/Toast';
+import { ProductIcon } from '../components/ui/ProductIcon';
 
 export const Inventory = () => {
   const navigate = useNavigate();
@@ -91,7 +92,7 @@ export const Inventory = () => {
                 {filtered.map((p, i) => (
                    <div key={p.id} className="au" style={{ animationDelay: `${i * .04}s`, background: 'var(--bg2)', border: '1px solid var(--bdr)', borderRadius: 'var(--r12)', padding: '.85rem .95rem', display: 'flex', alignItems: 'center', gap: '.8rem' }}>
                       <div style={{ width: '2.8rem', height: '2.8rem', background: 'var(--bg3)', border: '1px solid var(--bdr)', borderRadius: '.8rem', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                         <span className="material-symbols-outlined fi" style={{ fontSize: '1.25rem', color: p.clr }}>{p.icon}</span>
+                         <ProductIcon product={p} fontSize="1.25rem" />
                       </div>
                       <div style={{ flex: 1, minWidth: 0 }}>
                          <p style={{ fontWeight: 800, fontSize: '.85rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.name}</p>
