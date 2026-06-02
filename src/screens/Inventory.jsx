@@ -11,8 +11,7 @@ export const Inventory = () => {
   const navigate = useNavigate();
   const { inventory, user, addInventoryItem, isSeeding } = useAppContext();
   const [search, setSearch] = useState('');
-  // Filter by user's business category by default
-  const [filter, setFilter] = useState(user.cat || 'all');
+  const [filter, setFilter] = useState('all');
 
   const categories = ['all', ...new Set(inventory.map(p => p.cat))];
   
@@ -34,11 +33,17 @@ export const Inventory = () => {
                 className="btn-icon" 
                 onClick={() => navigate('/add-inventory')}
                 style={{ background: 'rgba(120,242,117,.1)', border: '1px solid rgba(120,242,117,.3)', color: 'var(--g4)' }}
+                title="Add Inventory"
               >
                 <span className="material-symbols-outlined">add_box</span>
               </button>
-              <button className="btn-icon" onClick={() => navigate('/invoice')}>
-                <span className="material-symbols-outlined">upload_file</span>
+              <button 
+                className="btn-icon" 
+                onClick={() => navigate('/sell')}
+                style={{ background: 'rgba(255,208,96,.1)', border: '1px solid rgba(255,208,96,.3)', color: 'var(--o4)' }}
+                title="Sell Product"
+              >
+                <span className="material-symbols-outlined">storefront</span>
               </button>
             </div>
           }
@@ -65,6 +70,17 @@ export const Inventory = () => {
                   {c}
                 </button>
               ))}
+           </div>
+           
+           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '.8rem', marginTop: '1rem' }}>
+             <button onClick={() => navigate('/add-inventory')} style={{ background: 'var(--bg2)', border: '1px solid var(--bdr2)', borderRadius: 'var(--r8)', padding: '.8rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '.5rem', color: 'var(--t1)', fontWeight: 700, cursor: 'pointer' }}>
+               <span className="material-symbols-outlined" style={{ color: 'var(--t2)' }}>qr_code_scanner</span>
+               Scan Barcode
+             </button>
+             <button onClick={() => navigate('/invoice')} style={{ background: 'var(--bg2)', border: '1px solid var(--bdr2)', borderRadius: 'var(--r8)', padding: '.8rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '.5rem', color: 'var(--t1)', fontWeight: 700, cursor: 'pointer' }}>
+               <span className="material-symbols-outlined" style={{ color: 'var(--t2)' }}>receipt_long</span>
+               Upload Invoice
+             </button>
            </div>
         </div>
 
@@ -104,8 +120,8 @@ export const Inventory = () => {
                       </div>
                       <div style={{ textAlign: 'right', flexShrink: 0 }}>
                          <p style={{ fontWeight: 800, fontSize: '.9rem' }}>₹{p.sell}</p>
-                         <p style={{ fontSize: '.62rem', color: 'var(--g4)' }}>earn ₹{p.earn}</p>
-                         <p style={{ fontSize: '.6rem', color: 'var(--t3)' }}>buy ₹{p.buy}</p>
+                         <p style={{ fontSize: '.62rem', color: 'var(--g4)' }}>{user?.role === 'distributor' ? `margin ₹${p.earn}` : `earn ₹${p.earn}`}</p>
+                         <p style={{ fontSize: '.6rem', color: 'var(--t3)' }}>{user?.role === 'distributor' ? `cost ₹${p.buy}` : `buy ₹${p.buy}`}</p>
                       </div>
                    </div>
                 ))}

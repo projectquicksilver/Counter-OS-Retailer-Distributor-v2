@@ -2,7 +2,7 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 
 const AppContext = createContext();
 
-const initialUser = { phone: '', name: 'Ramesh Kumar Sharma', shop: 'Ramesh Agro Traders', loc: 'Khetgaon, MP', cat: '' };
+const initialUser = { phone: '', name: 'Ramesh Kumar Sharma', shop: 'Ramesh Agro Traders', loc: 'Khetgaon, MP', cat: '', role: '' };
 
 const initialInv = [];
 
@@ -41,6 +41,7 @@ const getInitialTransactions = (category) => {
       {id:3, type:'sale',label:'Sale to Customer',sub:'Phone Charger × 2',date:'Yesterday',amt:'+₹280',clr:'#ffd060',icon:'storefront'},
     ],
   };
+
   return txns[category] || txns.food;
 };
 
@@ -51,8 +52,22 @@ const STORAGE_KEYS = {
   user: 'counterOS_user',
   inventory: 'counterOS_inventory',
   wallet: 'counterOS_wallet',
-  theme: 'counterOS_theme'
+  theme: 'counterOS_theme',
+  distOrders: 'counterOS_distOrders',
+  myRetailers: 'counterOS_myRetailers',
+  notifications: 'counterOS_notifications'
 };
+
+const initialRetailers = [
+  { id: 'RET-001', name: 'Ramesh Agro Traders', ltv: 125000, tier: 'Gold', lastOrder: '2 days ago' },
+  { id: 'RET-002', name: 'Kisan Kendra', ltv: 85000, tier: 'Silver', lastOrder: '1 week ago' },
+  { id: 'RET-003', name: 'Green Farm Supply', ltv: 210000, tier: 'Diamond', lastOrder: 'Today' }
+];
+
+const initialOrders = [
+  { id: 'ORD-8291', retailer: 'Ramesh Agro Traders', items: 12, total: 4500, status: 'pending', time: '10 mins ago', date: new Date().toISOString() },
+  { id: 'ORD-8290', retailer: 'Kisan Kendra', items: 5, total: 1280, status: 'fulfilled', time: '2 hours ago', date: new Date().toISOString() }
+];
 
 // Helper functions for localStorage
 const loadFromStorage = (key, defaultValue = null) => {
@@ -78,6 +93,8 @@ export const AppProvider = ({ children }) => {
   const [user, setUserState] = useState(() => loadFromStorage(STORAGE_KEYS.user, initialUser));
   const [theme, setThemeState] = useState(() => loadFromStorage(STORAGE_KEYS.theme, 'dark'));
   const [inventory, setInventoryState] = useState(() => loadFromStorage(STORAGE_KEYS.inventory, initialInv));
+  const [distOrdersState, setDistOrdersState] = useState(() => loadFromStorage(STORAGE_KEYS.distOrders, initialOrders));
+  const [myRetailersState, setMyRetailersState] = useState(() => loadFromStorage(STORAGE_KEYS.myRetailers, initialRetailers));
   const [transactions, setTransactions] = useState(() => {
     const restoredUser = loadFromStorage(STORAGE_KEYS.user, initialUser);
     console.log(`📊 Initializing category-appropriate transactions for: ${restoredUser.cat || 'food'}`);
@@ -86,7 +103,40 @@ export const AppProvider = ({ children }) => {
   const [cart, setCart] = useState([]);
   const [linkedDists, setLinkedDists] = useState([]);
   const [walletBalance, setWalletBalanceState] = useState(() => loadFromStorage(STORAGE_KEYS.wallet, 3482.50));
+  const [notifications, setNotificationsState] = useState(() => loadFromStorage(STORAGE_KEYS.notifications, []));
+  
+  const [globalPopup, setGlobalPopup] = useState(null);
   const [isSeeding, setIsSeeding] = useState(false);
+
+  // ─── POPUP SYSTEM ───────────────────────────────────────────────────────────
+  // Rule: user.role in React state is PER-TAB (initialized from localStorage once
+  // on mount, not updated when other tabs change it). So checking user.role here
+  // correctly tells us which role THIS TAB is logged in as.
+  //
+  // showGlobalPopup(popup, 'distributor') -> writes to localStorage
+  // -> storage event fires ONLY in OTHER tabs -> those tabs check their own
+  //    user.role to decide whether to show it.
+  // ─────────────────────────────────────────────────────────────────────────────
+
+  const showGlobalPopup = (popup, targetRole) => {
+    if (!popup) { setGlobalPopup(null); return; }
+
+    if (!targetRole) {
+      // No target - show in current tab immediately
+      setGlobalPopup(popup);
+      return;
+    }
+
+    // Write to localStorage. The storage event fires in ALL other tabs.
+    // Current tab does NOT receive its own storage events.
+    localStorage.setItem(
+      `counterOS_popup_for_${targetRole}`,
+      JSON.stringify({ ...popup, savedAt: Date.now() })
+    );
+    // Note: if both tabs are the same role (unusual), no cross-tab delivery needed.
+    // The single-tab fallback below (on role login) handles it.
+  };
+
 
   // Wrapper functions that also persist to localStorage
   const setUser = (updater) => {
@@ -112,6 +162,30 @@ export const AppProvider = ({ children }) => {
     });
   };
 
+  const setNotifications = (updater) => {
+    setNotificationsState(prev => {
+      const next = typeof updater === 'function' ? updater(prev) : updater;
+      saveToStorage(STORAGE_KEYS.notifications, next);
+      return next;
+    });
+  };
+
+  const setDistOrders = (updater) => {
+    setDistOrdersState(prev => {
+      const next = typeof updater === 'function' ? updater(prev) : updater;
+      saveToStorage('counterOS_distOrders', next);
+      return next;
+    });
+  };
+
+  const setMyRetailers = (updater) => {
+    setMyRetailersState(prev => {
+      const next = typeof updater === 'function' ? updater(prev) : updater;
+      saveToStorage('counterOS_myRetailers', next);
+      return next;
+    });
+  };
+
   const setWalletBalance = (updater) => {
     setWalletBalanceState(prev => {
       const updated = typeof updater === 'function' ? updater(prev) : updater;
@@ -120,10 +194,59 @@ export const AppProvider = ({ children }) => {
     });
   };
 
+  const addNotification = (notif) => {
+    setNotifications(prev => [{ ...notif, id: Date.now(), isRead: false, time: 'Just now' }, ...prev]);
+  };
+
   // Sync theme to HTML
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
   }, [theme]);
+
+  // ─── On login: check if there's a saved popup for this role ─────────────────
+  // This covers single-tab scenario: Retailer places order, logs out, logs in as
+  // Distributor -> finds the saved popup in localStorage and shows it.
+  useEffect(() => {
+    const role = user?.role;
+    if (!role) return;
+    const saved = localStorage.getItem(`counterOS_popup_for_${role}`);
+    if (saved) {
+      try {
+        const data = JSON.parse(saved);
+        if (Date.now() - data.savedAt < 10 * 60 * 1000) {
+          // Delay slightly so the page finishes transitioning
+          setTimeout(() => setGlobalPopup(data), 600);
+        }
+      } catch(e) {}
+      localStorage.removeItem(`counterOS_popup_for_${role}`);
+    }
+  }, [user?.role]);
+
+  // ─── Cross-tab: storage event fires in OTHER tabs when localStorage changes ──
+  // Tab 1 (Retailer) writes to counterOS_popup_for_distributor.
+  // Tab 2 (Distributor) receives the storage event.
+  // Tab 2 checks its own user.role (React state, per-tab) == 'distributor' -> show.
+  useEffect(() => {
+    const handleStorage = (e) => {
+      // Popup delivery to this tab
+      if (e.key === `counterOS_popup_for_${user?.role}` && e.newValue) {
+        try {
+          const data = JSON.parse(e.newValue);
+          if (Date.now() - data.savedAt < 10 * 60 * 1000) {
+            setGlobalPopup(data);
+          }
+          // Remove so it doesn't show again on role-change useEffect
+          localStorage.removeItem(`counterOS_popup_for_${user?.role}`);
+        } catch(e) {}
+      }
+      // Sync distOrders across tabs
+      if (e.key === 'counterOS_distOrders' && e.newValue) {
+        setDistOrdersState(JSON.parse(e.newValue));
+      }
+    };
+    window.addEventListener('storage', handleStorage);
+    return () => window.removeEventListener('storage', handleStorage);
+  }, [user?.role]);
 
   // When user category changes, clear AND reset inventory from storage with new category
   useEffect(() => {
@@ -292,6 +415,118 @@ export const AppProvider = ({ children }) => {
     return earned;
   };
 
+  const placeB2BOrder = (order) => {
+    const newOrder = {
+      ...order,
+      id: `ORD-${Math.floor(8000 + Math.random()*1000)}`,
+      status: 'pending',
+      time: 'Just now',
+      date: new Date().toISOString()
+    };
+    setDistOrders(prev => [newOrder, ...prev]);
+    addNotification({
+      title: 'New Order Received',
+      body: `${order.retailer} placed an order for ${order.items} items.`,
+      role: 'distributor', isRead: false
+    });
+    // Fire popup to distributor tab
+    showGlobalPopup({
+      title: '🛍️ New Order Received!',
+      message: `${order.retailer} just placed an order for ${order.items} items worth ₹${order.total?.toLocaleString('en-IN')}.`,
+      type: 'pending',
+      icon: 'shopping_bag'
+    }, 'distributor');
+  };
+
+  const approveB2BOrder = (orderId) => {
+    const otp = Math.floor(1000 + Math.random() * 9000).toString();
+    setDistOrders(prev => prev.map(o => {
+      if (o.id === orderId) {
+        addNotification({
+          title: 'Order Approved!',
+          body: `Your order ${orderId} has been approved. Delivery OTP: ${otp}`,
+          role: 'retailer', isRead: false
+        });
+        // Fire popup to retailer tab
+        showGlobalPopup({
+          title: '✅ Order Approved!',
+          message: `Your order ${orderId} has been approved! Your delivery OTP is: ${otp}. Share this with the delivery person.`,
+          type: 'approved',
+          icon: 'check_circle'
+        }, 'retailer');
+
+        return { ...o, status: 'approved', otp: otp };
+      }
+      return o;
+    }));
+  };
+
+  const deliverB2BOrder = (orderId, enteredOtp) => {
+    let success = false;
+    let earned = 0;
+    setDistOrders(prev => {
+      const nextDistOrders = prev.map(o => {
+        if (o.id === orderId) {
+          if (o.otp === enteredOtp) {
+            success = true;
+            earned = o.total;
+            return { ...o, status: 'fulfilled' };
+          }
+          return o;
+        }
+        return o;
+      });
+      return nextDistOrders;
+    });
+
+    if (success) {
+      setWalletBalance(prev => prev + earned);
+      addTransaction({
+        type: 'sale',
+        label: 'B2B Wholesale Fulfillment',
+        sub: 'Order ' + orderId,
+        date: 'Just now',
+        amt: '+₹' + earned.toLocaleString('en-IN'),
+        clr: '#ffd060',
+        icon: 'local_shipping'
+      });
+      addNotification({
+        title: 'Order Fulfilled',
+        body: `Order ${orderId} delivered successfully!`,
+        role: 'retailer', isRead: false
+      });
+      // Fire popup to retailer tab
+      showGlobalPopup({
+        title: '🎉 Order Delivered!',
+        message: `OTP verified for order ${orderId}. Your order has been delivered successfully!`,
+        type: 'fulfilled',
+        icon: 'local_shipping'
+      }, 'retailer');
+    }
+    return success;
+  };
+
+  const rejectB2BOrder = (orderId) => {
+    setDistOrders(prev => prev.map(o => {
+      if (o.id === orderId) {
+        addNotification({
+          title: 'Order Rejected',
+          body: `Order ${orderId} was rejected by the distributor.`,
+          role: 'retailer', isRead: false
+        });
+        // Fire popup to retailer tab
+        showGlobalPopup({
+          title: '❌ Order Rejected',
+          message: `Order ${orderId} was rejected by the distributor (out of stock).`,
+          type: 'rejected',
+          icon: 'cancel'
+        }, 'retailer');
+        return { ...o, status: 'rejected' };
+      }
+      return o;
+    }));
+  };
+
   const value = {
     user,
     setUser,
@@ -311,7 +546,20 @@ export const AppProvider = ({ children }) => {
     setLinkedDists,
     walletBalance,
     setWalletBalance,
-    initializeAIStore
+    initializeAIStore,
+    distOrders: distOrdersState,
+    setDistOrders,
+    myRetailers: myRetailersState,
+    setMyRetailers,
+    placeB2BOrder,
+    approveB2BOrder,
+    deliverB2BOrder,
+    rejectB2BOrder,
+    notifications,
+    setNotifications,
+    addNotification,
+    globalPopup,
+    showGlobalPopup
   };
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

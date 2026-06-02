@@ -3,14 +3,19 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
 import { showToast } from '../../components/ui/Toast';
+import { useAppContext } from '../../context/AppContext';
 
 export const Payout = () => {
   const navigate = useNavigate();
+  const { user } = useAppContext();
   const [method, setMethod] = useState('upi');
 
   const handleNext = () => {
     navigate('/setup/ready');
   };
+
+  const isDist = user?.role === 'distributor';
+  const subtitle = isDist ? 'How would you like to receive payments from your retailers? We settle instantly.' : 'How would you like to receive your cashback and sale rewards? We settle instantly.';
 
   return (
     <div className="screen active">
@@ -27,7 +32,7 @@ export const Payout = () => {
       </div>
       
       <div className="scroller" style={{ padding: '1.25rem' }}>
-        <p style={{ fontSize: '.85rem', color: 'var(--t2)', marginBottom: '1.4rem', lineHeight: 1.5 }}>How would you like to receive your cashback and sale rewards? We settle instantly.</p>
+        <p style={{ fontSize: '.85rem', color: 'var(--t2)', marginBottom: '1.4rem', lineHeight: 1.5 }}>{subtitle}</p>
         
         <div className="au d1" style={{ display: 'grid', gap: '.75rem', marginBottom: '1.5rem' }}>
           <div className={`selopt ${method === 'mobile' ? 'sel' : ''}`} onClick={() => setMethod('mobile')}>

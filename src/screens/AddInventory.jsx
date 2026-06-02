@@ -286,7 +286,7 @@ export const AddInventory = () => {
 
           {tab === 'scan' && (
              <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-                <div style={{ height: '350px', borderRadius: '16px', overflow: 'hidden', border: '1px solid #2a2a2a' }}>
+                <div style={{ height: '350px', borderRadius: '16px', overflow: 'hidden', border: '1px solid #2a2a2a', position: 'relative' }}>
                    <Scanner onScan={(code) => {
                       const p = inventory.find(x => x.code === code);
                       if (p) {
@@ -294,13 +294,26 @@ export const AddInventory = () => {
                          setTab('manual');
                          showToast(`✅ Found: ${p.name}`);
                       } else {
-                         setForm({ ...form, code: code });
+                         setForm({ ...form, code: code, name: 'Sample Product ' + code.slice(-4), cat: user.cat || 'General', unit: 'box', qty: 10, buy: 100, sell: 120 });
                          setTab('manual');
-                         showToast(`ℹ️ Code ${code} detected. Enter product details.`);
+                         showToast(`ℹ️ Code ${code} detected. Details pre-filled.`);
                       }
                    }} />
                 </div>
-                <p style={{ textAlign: 'center', color: 'var(--t3)', fontSize: '.75rem' }}>Point camera at product barcode to pre-fill details</p>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '.8rem', alignItems: 'center' }}>
+                   <p style={{ textAlign: 'center', color: 'var(--t3)', fontSize: '.75rem' }}>Point camera at product barcode to pre-fill details</p>
+                   <button 
+                     onClick={() => {
+                        const fakeCode = '890' + Math.floor(100000000 + Math.random() * 900000000);
+                        setForm({ ...form, code: fakeCode, name: 'Wholesale Demo Product', cat: user.cat || 'General', unit: 'box', qty: 50, buy: 250, sell: 300 });
+                        setTab('manual');
+                        showToast(`✅ Demo Barcode Scanned!`);
+                     }}
+                     style={{ background: 'var(--g4)', color: '#000', border: 'none', padding: '.6rem 1.2rem', borderRadius: 'var(--r8)', fontSize: '.8rem', fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '.4rem' }}>
+                     <span className="material-symbols-outlined" style={{ fontSize: '1.2rem' }}>document_scanner</span>
+                     Simulate Scan for Demo
+                   </button>
+                </div>
              </div>
           )}
 

@@ -55,8 +55,9 @@ export const ShopSetup = () => {
     initializeAIStore(category, catLabel);
     
     setUser(prev => ({ ...prev, shop: shopName, name: ownerName, cat: category, loc: locState.name || 'India' }));
-    navigate('/setup/distributor');
+    navigate('/setup/distributor-link');
   };
+
 
   return (
     <div className="screen active">

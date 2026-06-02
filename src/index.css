@@ -194,6 +194,8 @@ select.ifield{appearance:none;cursor:pointer}
 @keyframes dotBlink{0%,100%{opacity:1}33%{opacity:.2}}
 @keyframes waveBar{0%,100%{height:4px}50%{height:20px}}
 @keyframes barGrow{from{width:0}to{width:var(--w)}}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes slideUp{from{opacity:0;transform:translateY(40px) scale(0.92)}to{opacity:1;transform:translateY(0) scale(1)}}
 
 .au{animation:fadeUp .42s cubic-bezier(.4,0,.2,1) both}
 .as{animation:scaleIn .35s cubic-bezier(.4,0,.2,1) both}

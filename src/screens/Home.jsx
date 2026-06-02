@@ -171,6 +171,17 @@ Wallet: ₹${walletBalance}`;
                    </div>
                 </div>
 
+                <div onClick={() => navigate('/buy-from-dist')} style={{ background: 'rgba(120,242,117,.08)', border: '1px solid rgba(120,242,117,.25)', borderRadius: 'var(--r12)', padding: '1rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '.8rem' }}>
+                   <div style={{ width: '2.5rem', height: '2.5rem', background: 'var(--g4)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <span className="material-symbols-outlined fi" style={{ color: '#000', fontSize: '1.3rem' }}>local_shipping</span>
+                   </div>
+                   <div>
+                      <p style={{ fontSize: '.95rem', fontWeight: 800, color: 'var(--g4)', marginBottom: '.1rem' }}>Order from Distributor</p>
+                      <p style={{ fontSize: '.7rem', color: 'var(--t2)' }}>Restock inventory directly from suppliers</p>
+                   </div>
+                </div>
+
+
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: '.6rem' }}>
                    <div onClick={() => navigate('/earnings')} style={{ background: 'var(--bg2)', border: '1px solid var(--bdr)', borderRadius: 'var(--r12)', padding: '.8rem .4rem', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '.5rem', cursor: 'pointer' }}>
                       <div style={{ width: '2.2rem', height: '2.2rem', background: 'rgba(160,210,255,.1)', borderRadius: '.6rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><span className="material-symbols-outlined fi" style={{ color: 'var(--td)', fontSize: '1.1rem' }}>bar_chart</span></div>

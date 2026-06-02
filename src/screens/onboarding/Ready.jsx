@@ -56,7 +56,11 @@ export const Ready = () => {
     // Simulate AI greeting fetch
     const tId = setTimeout(() => {
       setLoading(false);
-      setWelcomeMsg(`Welcome ${user.name.split(' ')[0]}! Your dual-earning account is ready. Upload your first distributor invoice to earn purchase cashback, then start selling to earn sale rewards. Your Gold tier (1.75%) kicks in at ₹50,000/month.`);
+      const isDist = user?.role === 'distributor';
+      setWelcomeMsg(isDist 
+        ? `Welcome ${user.name.split(' ')[0]}! Your wholesale dashboard is ready. Upload your inventory, track incoming orders, and fulfill them easily to start earning.` 
+        : `Welcome ${user.name.split(' ')[0]}! Your dual-earning account is ready. Upload your first distributor invoice to earn purchase cashback, then start selling to earn sale rewards. Your Gold tier (1.75%) kicks in at ₹50,000/month.`
+      );
     }, 1500);
     
     return () => clearTimeout(tId);
@@ -104,8 +108,8 @@ export const Ready = () => {
           </div>
        </div>
 
-       <div className="au d3" style={{ padding: '0 1.4rem 2rem' }}>
-          <Button onClick={() => navigate('/home')}>Take me to Dashboard <span className="material-symbols-outlined" style={{ fontSize: '1.1rem' }}>rocket_launch</span></Button>
+        <div className="au d3" style={{ padding: '0 1.4rem 2rem' }}>
+          <Button onClick={() => navigate(user?.role === 'distributor' ? '/distributor-home' : '/home')}>Take me to Dashboard <span className="material-symbols-outlined" style={{ fontSize: '1.1rem' }}>rocket_launch</span></Button>
        </div>
     </div>
   );
