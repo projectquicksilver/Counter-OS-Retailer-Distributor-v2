@@ -7,10 +7,39 @@ import { useAppContext } from '../../context/AppContext';
 
 export const Payout = () => {
   const navigate = useNavigate();
-  const { user } = useAppContext();
-  const [method, setMethod] = useState('upi');
+  const { user, updateProfile } = useAppContext();
+  const [method, setMethod] = useState(user.payout_method || 'upi');
+  
+  const [upiId, setUpiId] = useState(user.payout_method === 'upi' ? user.payout_detail : '');
+  const [mobileNo, setMobileNo] = useState(user.payout_method === 'mobile' ? user.payout_detail : user.phone || '');
+  const [bankAccount, setBankAccount] = useState(user.payout_method === 'bank' ? user.payout_detail?.split(' ')[0] : '');
+  const [bankIfsc, setBankIfsc] = useState(user.payout_method === 'bank' ? user.payout_detail?.match(/\(([^)]+)\)/)?.[1] || '' : '');
 
-  const handleNext = () => {
+  const handleNext = async () => {
+    let detail = '';
+    if (method === 'upi') {
+      if (!upiId) { showToast('⚠️ Enter UPI ID'); return; }
+      detail = upiId;
+    } else if (method === 'mobile') {
+      if (!mobileNo) { showToast('⚠️ Enter mobile number'); return; }
+      detail = mobileNo;
+    } else if (method === 'bank') {
+      if (!bankAccount) { showToast('⚠️ Enter bank account number'); return; }
+      if (!bankIfsc) { showToast('⚠️ Enter IFSC code'); return; }
+      detail = `${bankAccount} (${bankIfsc.toUpperCase()})`;
+    }
+
+    try {
+      showToast('⏳ Saving payout details...');
+      await updateProfile({
+        payout_method: method,
+        payout_detail: detail
+      });
+      showToast('✅ Setup complete!');
+    } catch (e) {
+      console.error(e);
+    }
+    
     navigate('/setup/ready');
   };
 
@@ -64,7 +93,7 @@ export const Payout = () => {
 
         {method === 'upi' && (
           <div className="au as" style={{ marginBottom: '2rem' }}>
-            <Input label="UPI ID" placeholder="e.g. ramesh@okicici" wrapperClass="margin-bottom-875" />
+            <Input label="UPI ID" placeholder="e.g. ramesh@okicici" value={upiId} onChange={e=>setUpiId(e.target.value)} wrapperClass="margin-bottom-875" />
             <div style={{ display: 'flex', alignItems: 'center', gap: '.5rem', padding: '.75rem .875rem', background: 'rgba(160,210,255,.06)', border: '1px solid rgba(160,210,255,.18)', borderRadius: 'var(--r8)' }}>
               <span className="material-symbols-outlined fi" style={{ color: 'var(--td)', fontSize: '1.1rem' }}>verified_user</span>
               <p style={{ fontSize: '.7rem', color: 'var(--td)', lineHeight: 1.4 }}>We'll verify this UPI ID by sending ₹1 before your first withdrawal.</p>
@@ -74,7 +103,7 @@ export const Payout = () => {
 
         {method === 'mobile' && (
           <div className="au as" style={{ marginBottom: '2rem' }}>
-            <Input type="tel" maxLength="10" label="Mobile Number" placeholder="e.g. 9876543210" wrapperClass="margin-bottom-875" />
+            <Input type="tel" maxLength="10" label="Mobile Number" placeholder="e.g. 9876543210" value={mobileNo} onChange={e=>setMobileNo(e.target.value)} wrapperClass="margin-bottom-875" />
             <div style={{ display: 'flex', alignItems: 'center', gap: '.5rem', padding: '.75rem .875rem', background: 'rgba(120,242,117,.06)', border: '1px solid rgba(120,242,117,.18)', borderRadius: 'var(--r8)' }}>
               <span className="material-symbols-outlined fi" style={{ color: 'var(--g4)', fontSize: '1.1rem' }}>verified_user</span>
               <p style={{ fontSize: '.7rem', color: 'var(--t1)', lineHeight: 1.4 }}>We'll verify this mobile number before your first withdrawal.</p>
@@ -84,9 +113,8 @@ export const Payout = () => {
 
         {method === 'bank' && (
           <div className="au as" style={{ marginBottom: '2rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-            <Input label="Account Number" placeholder="e.g. 1234567890" />
-            <Input label="Re-enter Account Number" placeholder="e.g. 1234567890" />
-            <Input label="IFSC Code" placeholder="e.g. SBIN0001234" />
+            <Input label="Account Number" placeholder="e.g. 1234567890" value={bankAccount} onChange={e=>setBankAccount(e.target.value)} />
+            <Input label="IFSC Code" placeholder="e.g. SBIN0001234" value={bankIfsc} onChange={e=>setBankIfsc(e.target.value)} style={{textTransform: 'uppercase'}} />
           </div>
         )}
 

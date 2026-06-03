@@ -8,7 +8,7 @@ import { Chip } from '../components/ui/Chip';
 
 export const Login = () => {
   const navigate = useNavigate();
-  const { user, setUser } = useAppContext();
+  const { user, setUser, loginUser } = useAppContext();
   const [step, setStep] = useState(0);
   const [isNewUser, setIsNewUser] = useState(true);
   const [phone, setPhone] = useState('');
@@ -36,27 +36,46 @@ export const Login = () => {
     showToast('📱 OTP sent! Demo: 1234');
   };
 
-  const handleVerifyOTP = () => {
+  const handleVerifyOTP = async () => {
     if (otp === '1234' || otp.length === 4) {
-      showToast('✅ Verified!');
       const role = user?.role || 'retailer';
       const isDist = role === 'distributor';
-      // Save this TAB's role to sessionStorage (tab-specific, not shared between tabs)
-      sessionStorage.setItem('counterOS_tab_role', role);
-      setUser(prev => ({
-        ...prev,
-        name: isDist ? 'Rajesh Gupta' : 'Ramesh Kumar Sharma',
-        shop: isDist ? 'Gupta Mega Suppliers' : 'Ramesh Agro Traders',
-        loc: isDist ? 'Indore, MP' : 'Khetgaon, MP',
-        role: role
-      }));
-      setTimeout(() => {
-        if (isNewUser) {
-          navigate(isDist ? '/setup/distributor' : '/setup/shop');
-        } else {
-          navigate(isDist ? '/distributor-home' : '/home');
-        }
-      }, 500);
+      
+      try {
+        showToast('⏳ Authenticating...');
+        const loggedUser = await loginUser(phone || '9876543210', role, isNewUser);
+        
+        showToast('✅ Verified!');
+        sessionStorage.setItem('counterOS_tab_role', role);
+        
+        setTimeout(() => {
+          if (isNewUser) {
+            navigate(isDist ? '/setup/distributor' : '/setup/shop');
+          } else {
+            navigate(isDist ? '/distributor-home' : '/home');
+          }
+        }, 500);
+      } catch (e) {
+        console.error('❌ Login Error in Login.jsx:', e);
+        showToast('❌ Login failed. Trying local mode...');
+        // Fallback
+        sessionStorage.setItem('counterOS_tab_role', role);
+        setUser(prev => ({
+          ...prev,
+          phone: phone || '9876543210',
+          name: isDist ? 'Rajesh Gupta' : 'Ramesh Kumar Sharma',
+          shop: isDist ? 'Gupta Mega Suppliers' : 'Ramesh Agro Traders',
+          loc: isDist ? 'Indore, MP' : 'Khetgaon, MP',
+          role: role
+        }));
+        setTimeout(() => {
+          if (isNewUser) {
+            navigate(isDist ? '/setup/distributor' : '/setup/shop');
+          } else {
+            navigate(isDist ? '/distributor-home' : '/home');
+          }
+        }, 500);
+      }
     } else {
       showToast('❌ Wrong OTP. Use: 1234');
       setOtp('');

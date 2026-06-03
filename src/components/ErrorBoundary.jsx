@@ -73,7 +73,7 @@ export class ErrorBoundary extends React.Component {
             }}>{this.state.errorId}</code>).
           </p>
 
-          {process.env.NODE_ENV === 'development' && (
+          {(import.meta.env?.DEV || (typeof process !== 'undefined' && process.env?.NODE_ENV === 'development')) && (
             <details style={{
               marginBottom: '1.5rem',
               padding: '1rem',

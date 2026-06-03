@@ -45,7 +45,7 @@ export const ErrorLogger = {
     }
 
     // Console log in development
-    if (process.env.NODE_ENV === 'development') {
+    if (import.meta.env?.DEV || (typeof process !== 'undefined' && process.env?.NODE_ENV === 'development')) {
       console.error(`[${errorId}] ${error?.message}`, error);
     }
 
@@ -159,7 +159,7 @@ export const ErrorLogger = {
     // - Custom backend: POST /api/errors
     
     // For now, just log in dev mode
-    if (process.env.NODE_ENV === 'development') {
+    if (import.meta.env?.DEV || (typeof process !== 'undefined' && process.env?.NODE_ENV === 'development')) {
       console.group('📊 Error Monitoring');
       console.log('Error ID:', errorLog.id);
       console.log('Message:', errorLog.message);

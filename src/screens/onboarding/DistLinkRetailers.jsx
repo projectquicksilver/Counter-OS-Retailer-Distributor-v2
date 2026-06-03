@@ -4,6 +4,7 @@ import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
 import { showToast } from '../../components/ui/Toast';
 import { useAppContext } from '../../context/AppContext';
+import { supabase, isSupabaseConfigured } from '../../services/supabase';
 
 // Instant fallback retailers - shown immediately
 const getFallbackRetailers = () => {
@@ -18,27 +19,75 @@ const getFallbackRetailers = () => {
 
 export const DistLinkRetailers = () => {
   const navigate = useNavigate();
-  const { user, linkedDists, setLinkedDists } = useAppContext();
+  const { user, linkedDists, saveConnectionLink, setLinkedDists } = useAppContext();
   const [loading, setLoading] = useState(true);
   const [retailers, setRetailers] = useState([]);
   const [search, setSearch] = useState('');
 
   useEffect(() => {
-    // Show instant fallback
-    const instant = getFallbackRetailers();
-    setRetailers(instant);
-    setLoading(false);
+    const loadRetailers = async () => {
+      const fallbacks = getFallbackRetailers();
+      
+      if (!isSupabaseConfigured || !supabase) {
+        setRetailers(fallbacks);
+        setLoading(false);
+        return;
+      }
+
+      try {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('role', 'retailer');
+        
+        if (error) throw error;
+        
+        if (data && data.length > 0) {
+          const mapped = data.map(r => ({
+            id: r.id,
+            name: r.shop || r.name,
+            city: r.loc || 'Khetgaon',
+            products: [r.cat || 'Agri Retailer'],
+            rating: 4.6,
+            distance: 8,
+            emoji: '🏪'
+          }));
+          
+          const merged = [...mapped];
+          fallbacks.forEach(f => {
+            if (!merged.some(m => m.name.toLowerCase() === f.name.toLowerCase())) {
+              merged.push(f);
+            }
+          });
+          setRetailers(merged);
+        } else {
+          setRetailers(fallbacks);
+        }
+      } catch (err) {
+        console.error('Failed to load DB retailers:', err);
+        setRetailers(fallbacks);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadRetailers();
   }, [user.cat]);
 
-  const toggleLink = (retailer) => {
-    // Reusing linkedDists array to store linked retailers for demo purposes
-    const isLinked = linkedDists.some(d => d.id === retailer.id);
-    if (isLinked) {
-      setLinkedDists(prev => prev.filter(d => d.id !== retailer.id));
-      showToast('Unlinked');
+  const toggleLink = async (retailer) => {
+    if (isSupabaseConfigured && supabase) {
+      await saveConnectionLink(retailer);
+      const isLinked = linkedDists.some(d => d.id === retailer.id);
+      showToast(isLinked ? 'Unlinked' : `✅ ${retailer.name} linked!`);
     } else {
-      setLinkedDists(prev => [...prev, retailer]);
-      showToast(`✅ ${retailer.name} linked!`);
+      const isLinked = linkedDists.some(d => d.id === retailer.id);
+      if (isLinked) {
+        setLinkedDists(prev => prev.filter(d => d.id !== retailer.id));
+        showToast('Unlinked');
+      } else {
+        setLinkedDists(prev => [...prev, retailer]);
+        showToast(`✅ ${retailer.name} linked!`);
+      }
     }
   };
 

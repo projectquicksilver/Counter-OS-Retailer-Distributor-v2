@@ -6,6 +6,7 @@ import { showToast } from '../../components/ui/Toast';
 import { useAppContext } from '../../context/AppContext';
 import { Intelligence } from '../../services/intelligence';
 import { ErrorLogger } from '../../services/errorLogger';
+import { supabase, isSupabaseConfigured } from '../../services/supabase';
 
 // Instant fallback distributors - shown immediately
 const getFallbackDistributors = (category) => {
@@ -47,62 +48,75 @@ const getFallbackDistributors = (category) => {
 
 export const Distributor = () => {
   const navigate = useNavigate();
-  const { user, linkedDists, setLinkedDists } = useAppContext();
+  const { user, linkedDists, saveConnectionLink, setLinkedDists } = useAppContext();
   const [loading, setLoading] = useState(true);
   const [dists, setDists] = useState([]);
   const [search, setSearch] = useState('');
 
   useEffect(() => {
-    // Show instant fallback
-    const instant = getFallbackDistributors(user.cat);
-    setDists(instant);
-    console.log(`📦 Showing instant fallback: ${instant.length} distributors for ${user.cat}`);
-    setLoading(false);
-    
-    // Try to fetch dynamic distributors in background
-    const fetchDynamic = async () => {
-      console.log(`🌐 Attempting to fetch dynamic distributors for ${user.cat}...`);
-      try {
-        const prompt = `Return a JSON array of 3 wholesale distributors for a "${user.cat}" business in India near Khetgaon, MP. Return ONLY valid JSON array: [{"id":1,"name":"...","city":"...","products":[...],"rating":4.5,"distance":10,"emoji":"🏪"}]. Ensure all fields exist and are properly formatted.`;
-        
-        // Try OpenAI with timeout
-        const timeoutPromise = new Promise((_, reject) =>
-          setTimeout(() => reject(new Error('Timeout')), 5000)
-        );
-        
-        const res = await Promise.race([
-          Intelligence.askOpenAI(prompt, "You are a distributor database expert. Return ONLY valid JSON."),
-          timeoutPromise
-        ]);
-
-        if (res && Array.isArray(res) && res.length > 0) {
-          // Validate response has required fields
-          const valid = res.every(r => r.id && r.name && r.city && r.products && r.rating && r.distance);
-          if (valid) {
-            console.log(`✅ Got ${res.length} dynamic distributors, replacing fallback`);
-            setDists(res);
-            return;
-          }
-        }
-      } catch (error) {
-        console.log(`⚠️ Dynamic fetch failed: ${error.message}, keeping fallback`);
-        ErrorLogger.logError(error, { context: 'Distributor fetch', category: user.cat });
-      }
+    const loadDistributors = async () => {
+      const fallbacks = getFallbackDistributors(user.cat);
       
-      console.log(`📦 Keeping instant fallback`);
+      if (!isSupabaseConfigured || !supabase) {
+        setDists(fallbacks);
+        setLoading(false);
+        return;
+      }
+
+      try {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('role', 'distributor');
+        
+        if (error) throw error;
+        
+        if (data && data.length > 0) {
+          const mapped = data.map(d => ({
+            id: d.id,
+            name: d.shop || d.name,
+            city: d.loc || 'Indore',
+            products: [d.cat || 'Wholesale'],
+            rating: 4.8,
+            distance: 5,
+            emoji: '🏭'
+          }));
+          
+          const merged = [...mapped];
+          fallbacks.forEach(f => {
+            if (!merged.some(m => m.name.toLowerCase() === f.name.toLowerCase())) {
+              merged.push(f);
+            }
+          });
+          setDists(merged);
+        } else {
+          setDists(fallbacks);
+        }
+      } catch (err) {
+        console.error('Failed to load DB distributors:', err);
+        setDists(fallbacks);
+      } finally {
+        setLoading(false);
+      }
     };
 
-    fetchDynamic();
+    loadDistributors();
   }, [user.cat]);
 
-  const toggleLink = (dist) => {
-    const isLinked = linkedDists.some(d => d.id === dist.id);
-    if (isLinked) {
-      setLinkedDists(prev => prev.filter(d => d.id !== dist.id));
-      showToast('Unlinked');
+  const toggleLink = async (dist) => {
+    if (isSupabaseConfigured && supabase) {
+      await saveConnectionLink(dist);
+      const isLinked = linkedDists.some(d => d.id === dist.id);
+      showToast(isLinked ? 'Unlinked' : `✅ ${dist.name} linked!`);
     } else {
-      setLinkedDists(prev => [...prev, dist]);
-      showToast(`✅ ${dist.name} linked!`);
+      const isLinked = linkedDists.some(d => d.id === dist.id);
+      if (isLinked) {
+        setLinkedDists(prev => prev.filter(d => d.id !== dist.id));
+        showToast('Unlinked');
+      } else {
+        setLinkedDists(prev => [...prev, dist]);
+        showToast(`✅ ${dist.name} linked!`);
+      }
     }
   };
 

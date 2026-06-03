@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
 import { showToast } from '../../components/ui/Toast';
 import { useAppContext } from '../../context/AppContext';
+import { supabase, isSupabaseConfigured } from '../../services/supabase';
 
 const CAT_CONFIG = {
   agri:        {label:'Agri Distributor',      emoji:'🌾'},
@@ -16,13 +17,37 @@ const CAT_CONFIG = {
 
 export const DistSetup = () => {
   const navigate = useNavigate();
-  const { user, setUser, initializeAIStore } = useAppContext();
+  const { user, updateProfile, initializeAIStore } = useAppContext();
   
   const [shopName, setShopName] = useState(user.shop || '');
   const [ownerName, setOwnerName] = useState(user.name || '');
   const [gst, setGst] = useState('');
   const [category, setCategory] = useState(user.cat || 'agri');
   const [locState, setLocState] = useState({ name: user.loc, coords: '', status: user.loc ? 'detected' : 'idle' });
+  const [categoriesConfig, setCategoriesConfig] = useState(CAT_CONFIG);
+
+  useEffect(() => {
+    const fetchDBCategories = async () => {
+      if (!isSupabaseConfigured || !supabase) return;
+      try {
+        const { data, error } = await supabase
+          .from('business_categories')
+          .select('*');
+        
+        if (error) throw error;
+        if (data && data.length > 0) {
+          const config = {};
+          data.forEach(item => {
+            config[item.code] = { label: item.label + ' Dist.', emoji: item.emoji };
+          });
+          setCategoriesConfig(config);
+        }
+      } catch (err) {
+        console.warn('Using local category fallbacks:', err.message);
+      }
+    };
+    fetchDBCategories();
+  }, []);
 
   const fetchLoc = () => {
     setLocState({ name: '', coords: '', status: 'loading' });
@@ -36,15 +61,28 @@ export const DistSetup = () => {
     }, 1000);
   };
 
-  const handleNext = () => {
+  const handleNext = async () => {
     if (!shopName) { showToast('⚠️ Enter company name'); return; }
     if (!ownerName) { showToast('⚠️ Enter owner name'); return; }
     
     // Seed initial inventory in background based on category
-    const catLabel = CAT_CONFIG[category]?.label;
+    const catLabel = categoriesConfig[category]?.label;
     initializeAIStore(category, catLabel);
     
-    setUser(prev => ({ ...prev, shop: shopName, name: ownerName, cat: category, loc: locState.name || 'India', role: 'distributor' }));
+    try {
+      showToast('⏳ Saving registration...');
+      await updateProfile({ 
+        shop: shopName, 
+        name: ownerName, 
+        cat: category, 
+        loc: locState.name || 'India', 
+        role: 'distributor' 
+      });
+      showToast('✅ Saved!');
+    } catch(e) {
+      console.error(e);
+    }
+    
     navigate('/setup/retailer-link');
   };
 
@@ -75,7 +113,7 @@ export const DistSetup = () => {
         <div className="au d2" style={{ marginBottom: '1.5rem' }}>
           <label className="ilabel">Primary Supply Category</label>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '.6rem' }}>
-            {Object.entries(CAT_CONFIG).map(([key, val]) => (
+            {Object.entries(categoriesConfig).map(([key, val]) => (
               <div 
                 key={key} 
                 className={`selopt ${category === key ? 'sel' : ''}`}

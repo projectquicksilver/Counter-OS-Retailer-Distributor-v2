@@ -1,12 +1,11 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { supabase, isSupabaseConfigured } from '../services/supabase';
+import { Intelligence } from '../services/intelligence';
 
 const AppContext = createContext();
 
 const initialUser = { phone: '', name: 'Ramesh Kumar Sharma', shop: 'Ramesh Agro Traders', loc: 'Khetgaon, MP', cat: '', role: '' };
-
 const initialInv = [];
-
-const initialTxns = [];
 
 const getInitialTransactions = (category) => {
   const txns = {
@@ -45,9 +44,6 @@ const getInitialTransactions = (category) => {
   return txns[category] || txns.food;
 };
 
-import { Intelligence } from '../services/intelligence';
-
-// LocalStorage Keys
 const STORAGE_KEYS = {
   user: 'counterOS_user',
   inventory: 'counterOS_inventory',
@@ -69,11 +65,11 @@ const initialOrders = [
   { id: 'ORD-8290', retailer: 'Kisan Kendra', items: 5, total: 1280, status: 'fulfilled', time: '2 hours ago', date: new Date().toISOString() }
 ];
 
-// Helper functions for localStorage
 const loadFromStorage = (key, defaultValue = null) => {
   try {
     const stored = localStorage.getItem(key);
-    return stored ? JSON.parse(stored) : defaultValue;
+    if (stored === null || stored === 'undefined') return defaultValue;
+    return JSON.parse(stored);
   } catch (e) {
     console.error(`Failed to load ${key}:`, e);
     return defaultValue;
@@ -89,7 +85,7 @@ const saveToStorage = (key, value) => {
 };
 
 export const AppProvider = ({ children }) => {
-  // Initialize state from localStorage or use defaults
+  // ─── STATE DEFINITIONS ───
   const [user, setUserState] = useState(() => loadFromStorage(STORAGE_KEYS.user, initialUser));
   const [theme, setThemeState] = useState(() => loadFromStorage(STORAGE_KEYS.theme, 'dark'));
   const [inventory, setInventoryState] = useState(() => loadFromStorage(STORAGE_KEYS.inventory, initialInv));
@@ -97,52 +93,51 @@ export const AppProvider = ({ children }) => {
   const [myRetailersState, setMyRetailersState] = useState(() => loadFromStorage(STORAGE_KEYS.myRetailers, initialRetailers));
   const [transactions, setTransactions] = useState(() => {
     const restoredUser = loadFromStorage(STORAGE_KEYS.user, initialUser);
-    console.log(`📊 Initializing category-appropriate transactions for: ${restoredUser.cat || 'food'}`);
-    return getInitialTransactions(restoredUser.cat || 'food');
+    return getInitialTransactions(restoredUser?.cat || 'food');
   });
   const [cart, setCart] = useState([]);
+
+  const addToCart = (product) => {
+    setCart(prev => {
+      const existing = prev.find(item => item.id === product.id);
+      if (existing) {
+        return prev.map(item =>
+          item.id === product.id ? { ...item, qty: item.qty + 1 } : item
+        );
+      }
+      return [...prev, { ...product, qty: 1 }];
+    });
+  };
+
+  const updateCartQty = (id, delta) => {
+    setCart(prev => {
+      return prev.map(item => {
+        if (item.id === id) {
+          const newQty = item.qty + delta;
+          return newQty > 0 ? { ...item, qty: newQty } : null;
+        }
+        return item;
+      }).filter(Boolean);
+    });
+  };
+
+  const clearCart = () => {
+    setCart([]);
+  };
   const [linkedDists, setLinkedDists] = useState([]);
   const [walletBalance, setWalletBalanceState] = useState(() => loadFromStorage(STORAGE_KEYS.wallet, 3482.50));
   const [notifications, setNotificationsState] = useState(() => loadFromStorage(STORAGE_KEYS.notifications, []));
-  
   const [globalPopup, setGlobalPopup] = useState(null);
   const [isSeeding, setIsSeeding] = useState(false);
 
-  // ─── POPUP SYSTEM ───────────────────────────────────────────────────────────
-  // Rule: user.role in React state is PER-TAB (initialized from localStorage once
-  // on mount, not updated when other tabs change it). So checking user.role here
-  // correctly tells us which role THIS TAB is logged in as.
-  //
-  // showGlobalPopup(popup, 'distributor') -> writes to localStorage
-  // -> storage event fires ONLY in OTHER tabs -> those tabs check their own
-  //    user.role to decide whether to show it.
-  // ─────────────────────────────────────────────────────────────────────────────
+  // Use a ref to always access current user inside realtime callbacks (avoid stale closure)
+  const userRef = React.useRef(user);
+  useEffect(() => { userRef.current = user; }, [user]);
 
-  const showGlobalPopup = (popup, targetRole) => {
-    if (!popup) { setGlobalPopup(null); return; }
-
-    if (!targetRole) {
-      // No target - show in current tab immediately
-      setGlobalPopup(popup);
-      return;
-    }
-
-    // Write to localStorage. The storage event fires in ALL other tabs.
-    // Current tab does NOT receive its own storage events.
-    localStorage.setItem(
-      `counterOS_popup_for_${targetRole}`,
-      JSON.stringify({ ...popup, savedAt: Date.now() })
-    );
-    // Note: if both tabs are the same role (unusual), no cross-tab delivery needed.
-    // The single-tab fallback below (on role login) handles it.
-  };
-
-
-  // Wrapper functions that also persist to localStorage
+  // ─── LOCAL STORAGE FALLBACK SYNCS ───
   const setUser = (updater) => {
     setUserState(prev => {
       const updated = typeof updater === 'function' ? updater(prev) : updater;
-      console.log(`💾 Saving user to localStorage:`, updated);
       saveToStorage(STORAGE_KEYS.user, updated);
       return updated;
     });
@@ -156,7 +151,6 @@ export const AppProvider = ({ children }) => {
   const setInventory = (updater) => {
     setInventoryState(prev => {
       const updated = typeof updater === 'function' ? updater(prev) : updater;
-      console.log(`💾 Saving ${updated.length} items to inventory storage`);
       saveToStorage(STORAGE_KEYS.inventory, updated);
       return updated;
     });
@@ -173,7 +167,7 @@ export const AppProvider = ({ children }) => {
   const setDistOrders = (updater) => {
     setDistOrdersState(prev => {
       const next = typeof updater === 'function' ? updater(prev) : updater;
-      saveToStorage('counterOS_distOrders', next);
+      saveToStorage(STORAGE_KEYS.distOrders, next);
       return next;
     });
   };
@@ -181,7 +175,7 @@ export const AppProvider = ({ children }) => {
   const setMyRetailers = (updater) => {
     setMyRetailersState(prev => {
       const next = typeof updater === 'function' ? updater(prev) : updater;
-      saveToStorage('counterOS_myRetailers', next);
+      saveToStorage(STORAGE_KEYS.myRetailers, next);
       return next;
     });
   };
@@ -198,23 +192,40 @@ export const AppProvider = ({ children }) => {
     setNotifications(prev => [{ ...notif, id: Date.now(), isRead: false, time: 'Just now' }, ...prev]);
   };
 
-  // Sync theme to HTML
+  const addTransaction = (txn) => {
+    setTransactions(prev => [{ ...txn, id: Date.now(), date: 'Just now' }, ...prev]);
+  };
+
+  // Sync theme to HTML attribute
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
   }, [theme]);
 
-  // ─── On login: check if there's a saved popup for this role ─────────────────
-  // This covers single-tab scenario: Retailer places order, logs out, logs in as
-  // Distributor -> finds the saved popup in localStorage and shows it.
+  // ─── POPUP SYSTEM (LOCAL FALLBACK) ───
+  const showGlobalPopup = (popup, targetRole) => {
+    if (!popup) { setGlobalPopup(null); return; }
+
+    if (!targetRole || !isSupabaseConfigured) {
+      setGlobalPopup(popup);
+      return;
+    }
+
+    // Write cross-tab popup signal to localStorage for local testing
+    localStorage.setItem(
+      `counterOS_popup_for_${targetRole}`,
+      JSON.stringify({ ...popup, savedAt: Date.now() })
+    );
+  };
+
+  // Check saved popups on local storage (fallback)
   useEffect(() => {
     const role = user?.role;
-    if (!role) return;
+    if (!role || isSupabaseConfigured) return;
     const saved = localStorage.getItem(`counterOS_popup_for_${role}`);
     if (saved) {
       try {
         const data = JSON.parse(saved);
         if (Date.now() - data.savedAt < 10 * 60 * 1000) {
-          // Delay slightly so the page finishes transitioning
           setTimeout(() => setGlobalPopup(data), 600);
         }
       } catch(e) {}
@@ -222,24 +233,19 @@ export const AppProvider = ({ children }) => {
     }
   }, [user?.role]);
 
-  // ─── Cross-tab: storage event fires in OTHER tabs when localStorage changes ──
-  // Tab 1 (Retailer) writes to counterOS_popup_for_distributor.
-  // Tab 2 (Distributor) receives the storage event.
-  // Tab 2 checks its own user.role (React state, per-tab) == 'distributor' -> show.
+  // Sync tab updates in local testing mode
   useEffect(() => {
+    if (isSupabaseConfigured) return;
     const handleStorage = (e) => {
-      // Popup delivery to this tab
       if (e.key === `counterOS_popup_for_${user?.role}` && e.newValue) {
         try {
           const data = JSON.parse(e.newValue);
           if (Date.now() - data.savedAt < 10 * 60 * 1000) {
             setGlobalPopup(data);
           }
-          // Remove so it doesn't show again on role-change useEffect
           localStorage.removeItem(`counterOS_popup_for_${user?.role}`);
         } catch(e) {}
       }
-      // Sync distOrders across tabs
       if (e.key === 'counterOS_distOrders' && e.newValue) {
         setDistOrdersState(JSON.parse(e.newValue));
       }
@@ -248,150 +254,499 @@ export const AppProvider = ({ children }) => {
     return () => window.removeEventListener('storage', handleStorage);
   }, [user?.role]);
 
-  // When user category changes, clear AND reset inventory from storage with new category
+  // Seed inventory dynamically if empty
   useEffect(() => {
-    if (user.cat) {
-      const storedInv = loadFromStorage(STORAGE_KEYS.inventory, []);
-      // Check if stored inventory matches current category
-      if (storedInv.length > 0) {
-        const firstItemCat = storedInv[0]?.cat;
-        
-        // Map category codes to their expected item categories
-        const catMapping = {
-          agri: ['Fertilizers', 'Seeds', 'Pesticides'],
-          food: ['Grains', 'Flour', 'Oils', 'Legumes'],
-          pharma: ['Analgesics', 'Vitamins', 'Cough & Cold'],
-          hardware: ['Hand Tools', 'Power Tools', 'Fasteners'],
-          textile: ['T-Shirts', 'Jeans', 'Traditional', 'Bedding'],
-          electronics: ['Cables', 'Chargers', 'Accessories'],
-        };
-        
-        const expectedCats = catMapping[user.cat] || [];
-        const isCategoryMismatch = firstItemCat && !expectedCats.includes(firstItemCat);
-        
-        if (isCategoryMismatch) {
-          console.log(`🔄 Category mismatch detected! Stored: ${firstItemCat}, Expected: ${expectedCats.join('/')}`);
-          console.log(`🔄 Clearing inventory for category change from previous session`);
-          setInventory([]); // Clear mismatched inventory
-          saveToStorage(STORAGE_KEYS.inventory, []); // Clear from storage too
-        }
-      }
-    }
-  }, [user.cat]);
-
-  // Auto-initialize inventory when it becomes empty (category mismatched or first load)
-  useEffect(() => {
-    if (inventory.length === 0 && user.cat && !isSeeding) {
+    if (inventory.length === 0 && user?.cat && !isSeeding) {
       const CAT_LABELS = { 
         agri: 'Agri Retailer', food: 'Food & Grocery', pharma: 'Pharmacy', 
         hardware: 'Hardware & Tools', textile: 'Textile & Fashion', electronics: 'Electronics' 
       };
       const label = CAT_LABELS[user.cat] || user.cat;
-      console.log(`🔄 Auto-initializing inventory for category: ${user.cat} (${label})`);
       initializeAIStore(user.cat, label);
     }
-  }, [inventory.length, user.cat, isSeeding]);
+  }, [inventory.length, user?.cat, isSeeding]);
 
   const toggleTheme = () => {
     setTheme(prev => (prev === 'dark' ? 'light' : 'dark'));
   };
 
-  const initializeAIStore = async (category, categoryLabel) => {
-    // Only initialize if inventory is empty AND not already seeding
-    if (inventory.length > 0 || isSeeding) {
-      console.log(`⚠️ Skipping AI store init: inventory.length=${inventory.length}, isSeeding=${isSeeding}`);
-      return;
-    }
-    
-    setIsSeeding(true);
-    console.log(`🌱 Initializing AI store for category: ${category} (${categoryLabel})`);
-    
-    // Generate AI products based on user category
-    const label = categoryLabel || category;
-    const parsedData = await Intelligence.generateInventory(label);
-    
-    if (parsedData && parsedData.length > 0) {
-      const withCodes = parsedData.map((p, i) => ({
-        ...p,
-        id: p.id || Date.now() + i,
-        code: p.code || `P${1000 + i}`
-      }));
-      setInventory(withCodes);
-      console.log(`✅ AI Store initialized with ${withCodes.length} items`);
-    } else {
-      console.warn(`⚠️ No AI products generated for ${label}`);
-    }
-    
-    setIsSeeding(false);
-  };
+  // ─── SUPABASE CONTROLLER & REAL-TIME FLOWS ───
 
-  const addToCart = (product) => {
-    setCart(prev => {
-      const existing = prev.find(item => item.id === product.id);
-      if (existing) {
-        return prev.map(item => item.id === product.id ? { ...item, qty: item.qty + 1 } : item);
+  // 1. Authenticate user, loading/creating their persistent Supabase profile
+  const loginUser = async (phone, role, isNew) => {
+    if (!isSupabaseConfigured) {
+      // Offline fallback
+      const isDist = role === 'distributor';
+      const dummyUser = {
+        phone,
+        name: isDist ? 'Rajesh Gupta' : 'Ramesh Kumar Sharma',
+        shop: isDist ? 'Gupta Mega Suppliers' : 'Ramesh Agro Traders',
+        loc: isDist ? 'Indore, MP' : 'Khetgaon, MP',
+        role,
+        cat: isDist ? 'agri' : 'food',
+        wallet_balance: 3482.50
+      };
+      setUser(dummyUser);
+      setWalletBalance(3482.50);
+      return dummyUser;
+    }
+
+    try {
+      let { data: profile, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('phone', phone)
+        .maybeSingle();
+
+      if (error) throw error;
+
+      if (!profile) {
+        const isDist = role === 'distributor';
+        const newProfile = {
+          phone,
+          name: isDist ? 'Rajesh Gupta' : 'Ramesh Kumar Sharma',
+          shop: isDist ? 'Gupta Mega Suppliers' : 'Ramesh Agro Traders',
+          loc: isDist ? 'Indore, MP' : 'Khetgaon, MP',
+          role,
+          cat: isDist ? 'agri' : 'food',
+          wallet_balance: 3482.50
+        };
+
+        const { data, error: insertError } = await supabase
+          .from('profiles')
+          .insert([newProfile])
+          .select()
+          .single();
+
+        if (insertError) throw insertError;
+        profile = data;
+      } else {
+        if (profile.role !== role) {
+          const { data, error: updateError } = await supabase
+            .from('profiles')
+            .update({ role })
+            .eq('id', profile.id)
+            .select()
+            .single();
+          if (updateError) throw updateError;
+          profile = data;
+        }
       }
-      return [...prev, { ...product, qty: 1 }];
-    });
+
+      setUser(profile);
+      setWalletBalance(Number(profile.wallet_balance || 0));
+      return profile;
+    } catch (e) {
+      console.error('Supabase auth failed, running local mode:', e);
+      throw e;
+    }
   };
 
-  const updateCartQty = (id, delta) => {
-    setCart(prev => {
-      return prev.map(item => item.id === id ? { ...item, qty: item.qty + delta } : item)
-                 .filter(item => item.qty > 0);
-    });
+  // 2. Save shop onboarding or profile modifications
+  const updateProfile = async (updates) => {
+    setUser(prev => ({ ...prev, ...updates }));
+    if (!isSupabaseConfigured || !user?.id) return;
+
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update(updates)
+        .eq('id', user.id);
+      if (error) throw error;
+      console.log('✅ Profile updated in database:', updates);
+    } catch (e) {
+      console.error('Failed to save profile updates to database:', e);
+    }
   };
 
-  const clearCart = () => setCart([]);
+  // 3. Populate database initial seed list
+  const initializeAIStore = async (category, categoryLabel) => {
+    if (inventory.length > 0 || isSeeding) return;
+    setIsSeeding(true);
 
-  const addTransaction = (txn) => {
-    setTransactions(prev => [{...txn, id: Date.now()}, ...prev]);
+    try {
+      const label = categoryLabel || category;
+      const parsedData = await Intelligence.generateInventory(label);
+      
+      if (parsedData && parsedData.length > 0) {
+        const withCodes = parsedData.map((p, i) => ({
+          ...p,
+          id: p.id || Date.now() + i,
+          code: p.code || `P${1000 + i}`,
+          businessCat: category
+        }));
+
+        if (isSupabaseConfigured && user?.id) {
+          const dbRows = withCodes.map(item => ({
+            user_id: user.id,
+            code: item.code,
+            name: item.name,
+            cat: item.cat,
+            unit: item.unit,
+            qty: item.qty,
+            buy: item.buy,
+            sell: item.sell,
+            earn: item.earn,
+            mfg: item.mfg || '2024-06',
+            exp: item.exp || '2027-05',
+            business_cat: category
+          }));
+
+          const { error } = await supabase.from('inventory').insert(dbRows);
+          if (error) throw error;
+          
+          // Re-fetch clean list from database
+          const { data: updatedInv } = await supabase
+            .from('inventory')
+            .select('*')
+            .eq('user_id', user.id);
+          
+          if (updatedInv) {
+            setInventory(updatedInv.map(row => ({
+              id: row.id,
+              code: row.code,
+              name: row.name,
+              cat: row.cat,
+              unit: row.unit,
+              qty: row.qty,
+              buy: Number(row.buy),
+              sell: Number(row.sell),
+              earn: Number(row.earn),
+              mfg: row.mfg,
+              exp: row.exp,
+              businessCat: row.business_cat
+            })));
+          }
+        } else {
+          setInventory(withCodes);
+        }
+        console.log(`✅ Inventory seed successful for: ${category}`);
+      }
+    } catch (e) {
+      console.error('Failed to initialize AI store list:', e);
+    } finally {
+      setIsSeeding(false);
+    }
   };
 
-  const addInventoryItem = (item) => {
-    console.log(`📦 Adding to inventory: ${item.name}`);
-    
-    // Reward logic for inbound (distributor purchase)
-    // 0 < 5000: 0, 5000-10000: 5%, >10000: 10%
+  // ─── SUBSCRIBER CORE (LOAD & SUBSCRIBE REALTIME FROM DATABASE) ───
+  useEffect(() => {
+    if (!isSupabaseConfigured || !user?.id) return;
+
+    // Load initial data
+    const loadInitialData = async () => {
+      try {
+        // A. Inventory
+        const { data: dbInv } = await supabase
+          .from('inventory')
+          .select('*')
+          .eq('user_id', user.id);
+        if (dbInv) {
+          setInventoryState(dbInv.map(row => ({
+            id: row.id,
+            code: row.code,
+            name: row.name,
+            cat: row.cat,
+            unit: row.unit,
+            qty: row.qty,
+            buy: Number(row.buy),
+            sell: Number(row.sell),
+            earn: Number(row.earn),
+            mfg: row.mfg,
+            exp: row.exp,
+            businessCat: row.business_cat
+          })));
+        }
+
+        // B. Orders (Retailers see their orders, Distributors see all orders sent to them)
+        const orderQuery = user.role === 'distributor' 
+          ? supabase.from('orders').select('*') 
+          : supabase.from('orders').select('*').eq('retailer_id', user.id);
+        
+        const { data: dbOrders } = await orderQuery;
+        if (dbOrders) {
+          setDistOrdersState(dbOrders.map(o => ({
+            id: o.id,
+            retailer: o.retailer_name,
+            retailer_id: o.retailer_id,
+            items: o.items,
+            total: Number(o.total),
+            status: o.status,
+            otp: o.otp,
+            time: 'Active',
+            date: o.created_at,
+            items_list: o.items_list
+          })));
+        }
+
+        // C. Transactions
+        const { data: dbTxns } = await supabase
+          .from('transactions')
+          .select('*')
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: false });
+        if (dbTxns) {
+          setTransactions(dbTxns.map(t => ({
+            id: t.id,
+            type: t.type,
+            label: t.label,
+            sub: t.sub,
+            amt: t.amt,
+            clr: t.clr,
+            icon: t.icon,
+            date: new Date(t.created_at).toLocaleDateString()
+          })));
+        }
+
+        // D. Notifications
+        const { data: dbNotifs } = await supabase
+          .from('notifications')
+          .select('*')
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: false });
+        if (dbNotifs) {
+          setNotificationsState(dbNotifs.map(n => ({
+            id: n.id,
+            title: n.title,
+            body: n.body,
+            role: n.role,
+            isRead: n.is_read,
+            time: 'Recent'
+          })));
+        }
+
+        // E. Connections / Linked distributors
+        if (user.role === 'retailer') {
+          const { data: connections } = await supabase
+            .from('connections')
+            .select('distributor_id, profiles!connections_distributor_id_fkey(*)')
+            .eq('retailer_id', user.id);
+          
+          if (connections) {
+            setLinkedDists(connections.map(c => ({
+              id: c.profiles.id,
+              name: c.profiles.shop || c.profiles.name,
+              city: c.profiles.loc || 'India',
+              products: [c.profiles.cat || 'Wholesale'],
+              rating: 4.8,
+              distance: 5,
+              emoji: '🏭'
+            })));
+          }
+        } else {
+          // Distributor sees linked retailers
+          const { data: connections } = await supabase
+            .from('connections')
+            .select('retailer_id, profiles!connections_retailer_id_fkey(*)')
+            .eq('distributor_id', user.id);
+          
+          if (connections) {
+            setMyRetailers(connections.map(c => ({
+              id: c.profiles.id,
+              name: c.profiles.shop || c.profiles.name,
+              ltv: 125000,
+              tier: 'Gold',
+              lastOrder: 'Active'
+            })));
+          }
+        }
+      } catch (err) {
+        console.error('Initial DB load error:', err);
+      }
+    };
+
+    loadInitialData();
+
+    // SETUP WEB SOCKET REAL-TIME LISTENERS
+    const ordersChannel = supabase
+      .channel('realtime-orders-' + user.id)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, (payload) => {
+        const currentUser = userRef.current;
+        console.log('🔔 Realtime Order Update:', payload.eventType, payload.new?.status, 'for retailer:', payload.new?.retailer_id, 'current user:', currentUser?.id, 'role:', currentUser?.role);
+        
+        if (!payload.new) return;
+
+        const mappedNew = {
+          id: payload.new.id,
+          retailer: payload.new.retailer_name,
+          retailer_id: payload.new.retailer_id,
+          items: payload.new.items,
+          total: Number(payload.new.total),
+          status: payload.new.status,
+          otp: payload.new.otp,
+          time: 'Just now',
+          date: payload.new.created_at,
+          items_list: payload.new.items_list
+        };
+
+        // Always update the orders list
+        setDistOrdersState(prev => {
+          if (payload.eventType === 'INSERT') {
+            return [mappedNew, ...prev.filter(o => o.id !== mappedNew.id)];
+          }
+          if (payload.eventType === 'UPDATE') {
+            return prev.map(o => o.id === mappedNew.id ? mappedNew : o);
+          }
+          return prev;
+        });
+
+        // Show popup notifications based on role and event
+        if (payload.eventType === 'INSERT') {
+          // Distributor sees new order popup
+          if (currentUser?.role === 'distributor') {
+            setGlobalPopup({
+              title: '🛍️ New Order Received!',
+              message: `${payload.new.retailer_name} placed a B2B order worth ₹${Number(payload.new.total).toLocaleString('en-IN')}.`,
+              type: 'pending',
+              icon: 'shopping_bag'
+            });
+          }
+        }
+
+        if (payload.eventType === 'UPDATE') {
+          const newStatus = payload.new.status;
+          const isThisRetailersOrder = payload.new.retailer_id === currentUser?.id;
+
+          // Retailer gets popup when THEIR order status changes
+          if (currentUser?.role === 'retailer' && isThisRetailersOrder) {
+            if (newStatus === 'approved') {
+              setGlobalPopup({
+                title: '✅ Order Approved!',
+                message: `Your order ${payload.new.id} was approved! Delivery OTP: ${payload.new.otp}`,
+                type: 'approved',
+                icon: 'check_circle'
+              });
+            } else if (newStatus === 'fulfilled') {
+              setGlobalPopup({
+                title: '🎉 Order Delivered!',
+                message: `Order ${payload.new.id} has been delivered successfully!`,
+                type: 'fulfilled',
+                icon: 'local_shipping'
+              });
+            } else if (newStatus === 'rejected') {
+              setGlobalPopup({
+                title: '❌ Order Rejected',
+                message: `Your order ${payload.new.id} was rejected by the distributor.`,
+                type: 'rejected',
+                icon: 'cancel'
+              });
+            }
+          }
+        }
+      })
+      .subscribe((status) => {
+        console.log('📡 Orders channel status:', status);
+      });
+
+    const profileChannel = supabase
+      .channel('realtime-profile')
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'profiles', filter: `id=eq.${user.id}` }, (payload) => {
+        console.log('🔔 Wallet Balance Updated:', payload.new.wallet_balance);
+        setWalletBalanceState(Number(payload.new.wallet_balance));
+        setUserState(payload.new);
+      })
+      .subscribe();
+
+    const notifChannel = supabase
+      .channel('realtime-notif')
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'notifications', filter: `user_id=eq.${user.id}` }, (payload) => {
+        console.log('🔔 New Notification:', payload);
+        setNotificationsState(prev => [{
+          id: payload.new.id,
+          title: payload.new.title,
+          body: payload.new.body,
+          role: payload.new.role,
+          isRead: payload.new.is_read,
+          time: 'Just now'
+        }, ...prev]);
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(ordersChannel);
+      supabase.removeChannel(profileChannel);
+      supabase.removeChannel(notifChannel);
+    };
+  }, [user?.id, user?.role]);
+
+  // 4. Record new product item in DB
+  const addInventoryItem = async (item) => {
+    const defaultItem = {
+      ...item,
+      id: Date.now(),
+      code: item.code || `P${1000 + inventory.length}`,
+      mfg: item.mfg || '2024-06',
+      exp: item.exp || '2027-05',
+      businessCat: item.businessCat || user.cat || 'food'
+    };
+
+    setInventory(prev => [defaultItem, ...prev]);
+
+    // Handle reward cashback logic
     const purchaseTotal = Number(item.buy) * Number(item.qty);
     let reward = 0;
     if (purchaseTotal >= 10000) reward = purchaseTotal * 0.1;
     else if (purchaseTotal >= 5000) reward = purchaseTotal * 0.05;
 
-    if (reward > 0) {
-      setWalletBalance(prev => prev + reward);
-      addTransaction({
-        type: 'purchase',
-        label: 'Purchase Reward',
-        sub: `Cashback on ${item.name}`,
-        date: 'Just now',
-        amt: '+₹' + reward.toFixed(0),
-        clr: '#78f275',
-        icon: 'card_giftcard'
-      });
-    }
+    if (isSupabaseConfigured && user?.id) {
+      try {
+        const { error: invErr } = await supabase.from('inventory').insert([{
+          user_id: user.id,
+          code: defaultItem.code,
+          name: defaultItem.name,
+          cat: defaultItem.cat,
+          unit: defaultItem.unit,
+          qty: Number(defaultItem.qty),
+          buy: Number(defaultItem.buy),
+          sell: Number(defaultItem.sell),
+          earn: Number(defaultItem.earn),
+          mfg: defaultItem.mfg,
+          exp: defaultItem.exp,
+          business_cat: defaultItem.businessCat
+        }]);
+        if (invErr) throw invErr;
 
-    setInventory(prev => [{
-      ...item, 
-      id: Date.now(), 
-      code: item.code || `P${1000 + prev.length}`,
-      mfg: item.mfg || '2024-06',
-      exp: item.exp || '2027-05',
-      businessCat: item.businessCat || user.cat || 'food'
-    }, ...prev]);
+        if (reward > 0) {
+          const newBalance = walletBalance + reward;
+          await supabase.from('profiles').update({ wallet_balance: newBalance }).eq('id', user.id);
+          await supabase.from('transactions').insert([{
+            user_id: user.id,
+            type: 'purchase',
+            label: 'Purchase Reward',
+            sub: `Cashback on ${item.name}`,
+            amt: '+₹' + reward.toFixed(0),
+            clr: '#78f275',
+            icon: 'card_giftcard'
+          }]);
+        }
+      } catch(e) {
+        console.error('Failed to sync added inventory item to Supabase:', e);
+      }
+    } else {
+      if (reward > 0) {
+        setWalletBalance(prev => prev + reward);
+        addTransaction({
+          type: 'purchase',
+          label: 'Purchase Reward',
+          sub: `Cashback on ${item.name}`,
+          date: 'Just now',
+          amt: '+₹' + reward.toFixed(0),
+          clr: '#78f275',
+          icon: 'card_giftcard'
+        });
+      }
+    }
   };
 
-  const completeSale = (customerName, customerPhone, usedOtp = false) => {
-    console.log(`💰 Processing sale to ${customerName}`);
-    
+  // 5. Complete walk-in customer sale & adjust quantities
+  const completeSale = async (customerName, customerPhone, usedOtp = false) => {
     const baseEarned = cart.reduce((s, c) => s + c.earn * c.qty, 0);
     const otpBonus = usedOtp ? 5 : 0;
     const earned = +(baseEarned + otpBonus).toFixed(2);
-    
     const firstItem = cart[0]?.name.split(' ').slice(0, 3).join(' ') || 'Products';
     const ct = cart.reduce((s, c) => s + c.qty, 0);
-    
-    // deduct from inventory
+
+    // Update local state inventory quantities
     setInventory(prev => {
       const nextInv = [...prev];
       cart.forEach(c => {
@@ -401,135 +756,310 @@ export const AppProvider = ({ children }) => {
       return nextInv;
     });
 
-    addTransaction({
-      type: 'sale',
-      label: 'Sale to ' + customerName,
-      sub: firstItem + ' · ' + ct + ' items',
-      date: 'Just now',
-      amt: '+₹' + earned,
-      clr: '#ffd060',
-      icon: 'storefront'
-    });
-    setWalletBalance(prev => prev + earned);
+    if (isSupabaseConfigured && user?.id) {
+      try {
+        // Deduct quantities in DB
+        for (const cartItem of cart) {
+          const matchingDbItem = inventory.find(p => p.id === cartItem.id || p.code === cartItem.code);
+          if (matchingDbItem) {
+            const newQty = Math.max(0, matchingDbItem.qty - cartItem.qty);
+            await supabase.from('inventory').update({ qty: newQty }).eq('id', matchingDbItem.id);
+          }
+        }
+
+        // Add funds to wallet balance
+        const newBalance = walletBalance + earned;
+        await supabase.from('profiles').update({ wallet_balance: newBalance }).eq('id', user.id);
+
+        // Record retail transaction
+        await supabase.from('transactions').insert([{
+          user_id: user.id,
+          type: 'sale',
+          label: 'Sale to ' + customerName,
+          sub: firstItem + ' · ' + ct + ' items',
+          amt: '+₹' + earned,
+          clr: '#ffd060',
+          icon: 'storefront'
+        }]);
+      } catch (e) {
+        console.error('Failed to save sale updates to database:', e);
+      }
+    } else {
+      addTransaction({
+        type: 'sale',
+        label: 'Sale to ' + customerName,
+        sub: firstItem + ' · ' + ct + ' items',
+        date: 'Just now',
+        amt: '+₹' + earned,
+        clr: '#ffd060',
+        icon: 'storefront'
+      });
+      setWalletBalance(prev => prev + earned);
+    }
+
     clearCart();
     return earned;
   };
 
-  const placeB2BOrder = (order) => {
+  // 6. Create B2B purchase order
+  const placeB2BOrder = async (order) => {
+    const orderId = `ORD-${Math.floor(8000 + Math.random()*1000)}`;
     const newOrder = {
       ...order,
-      id: `ORD-${Math.floor(8000 + Math.random()*1000)}`,
+      id: orderId,
       status: 'pending',
       time: 'Just now',
       date: new Date().toISOString()
     };
+
     setDistOrders(prev => [newOrder, ...prev]);
-    addNotification({
-      title: 'New Order Received',
-      body: `${order.retailer} placed an order for ${order.items} items.`,
-      role: 'distributor', isRead: false
-    });
-    // Fire popup to distributor tab
-    showGlobalPopup({
-      title: '🛍️ New Order Received!',
-      message: `${order.retailer} just placed an order for ${order.items} items worth ₹${order.total?.toLocaleString('en-IN')}.`,
-      type: 'pending',
-      icon: 'shopping_bag'
-    }, 'distributor');
-  };
 
-  const approveB2BOrder = (orderId) => {
-    const otp = Math.floor(1000 + Math.random() * 9000).toString();
-    setDistOrders(prev => prev.map(o => {
-      if (o.id === orderId) {
-        addNotification({
-          title: 'Order Approved!',
-          body: `Your order ${orderId} has been approved. Delivery OTP: ${otp}`,
-          role: 'retailer', isRead: false
-        });
-        // Fire popup to retailer tab
-        showGlobalPopup({
-          title: '✅ Order Approved!',
-          message: `Your order ${orderId} has been approved! Your delivery OTP is: ${otp}. Share this with the delivery person.`,
-          type: 'approved',
-          icon: 'check_circle'
-        }, 'retailer');
+    if (isSupabaseConfigured && user?.id) {
+      try {
+        // Target distributor ID matching name selection or connection lookup
+        const { data: distProfile } = await supabase
+          .from('profiles')
+          .select('id')
+          .eq('shop', order.distributorName || 'Gupta Mega Suppliers')
+          .maybeSingle();
 
-        return { ...o, status: 'approved', otp: otp };
-      }
-      return o;
-    }));
-  };
+        const distributorId = distProfile?.id || null;
 
-  const deliverB2BOrder = (orderId, enteredOtp) => {
-    let success = false;
-    let earned = 0;
-    setDistOrders(prev => {
-      const nextDistOrders = prev.map(o => {
-        if (o.id === orderId) {
-          if (o.otp === enteredOtp) {
-            success = true;
-            earned = o.total;
-            return { ...o, status: 'fulfilled' };
-          }
-          return o;
+        const { error } = await supabase.from('orders').insert([{
+          id: orderId,
+          retailer_id: user.id,
+          retailer_name: user.shop || user.name,
+          items: Number(order.items),
+          total: Number(order.total),
+          status: 'pending',
+          items_list: order.cartItems || []
+        }]);
+
+        if (error) throw error;
+
+        // If distributor has an account, log a database notification
+        if (distributorId) {
+          await supabase.from('notifications').insert([{
+            user_id: distributorId,
+            title: 'New Order Received',
+            body: `${user.shop || user.name} placed a wholesale order for ${order.items} items.`,
+            role: 'distributor'
+          }]);
         }
-        return o;
-      });
-      return nextDistOrders;
-    });
-
-    if (success) {
-      setWalletBalance(prev => prev + earned);
-      addTransaction({
-        type: 'sale',
-        label: 'B2B Wholesale Fulfillment',
-        sub: 'Order ' + orderId,
-        date: 'Just now',
-        amt: '+₹' + earned.toLocaleString('en-IN'),
-        clr: '#ffd060',
-        icon: 'local_shipping'
-      });
+      } catch(e) {
+        console.error('Failed to place order in Supabase:', e);
+      }
+    } else {
       addNotification({
-        title: 'Order Fulfilled',
-        body: `Order ${orderId} delivered successfully!`,
+        title: 'New Order Received',
+        body: `${order.retailer} placed an order for ${order.items} items.`,
+        role: 'distributor', isRead: false
+      });
+      showGlobalPopup({
+        title: '🛍️ New Order Received!',
+        message: `${order.retailer} just placed an order for ${order.items} items worth ₹${order.total?.toLocaleString('en-IN')}.`,
+        type: 'pending',
+        icon: 'shopping_bag'
+      }, 'distributor');
+    }
+  };
+
+  // 7. Approve pending B2B order & dispatch OTP code
+  const approveB2BOrder = async (orderId) => {
+    const otp = Math.floor(1000 + Math.random() * 9000).toString();
+    
+    setDistOrders(prev => prev.map(o => o.id === orderId ? { ...o, status: 'approved', otp: otp } : o));
+
+    if (isSupabaseConfigured) {
+      try {
+        const { data: order } = await supabase
+          .from('orders')
+          .select('retailer_id')
+          .eq('id', orderId)
+          .single();
+
+        await supabase
+          .from('orders')
+          .update({ status: 'approved', otp: otp })
+          .eq('id', orderId);
+
+        if (order?.retailer_id) {
+          await supabase.from('notifications').insert([{
+            user_id: order.retailer_id,
+            title: 'Order Approved!',
+            body: `Your order ${orderId} has been approved. Delivery OTP: ${otp}`,
+            role: 'retailer'
+          }]);
+        }
+      } catch(e) {
+        console.error('Failed to approve order in database:', e);
+      }
+    } else {
+      addNotification({
+        title: 'Order Approved!',
+        body: `Your order ${orderId} has been approved. Delivery OTP: ${otp}`,
         role: 'retailer', isRead: false
       });
-      // Fire popup to retailer tab
       showGlobalPopup({
-        title: '🎉 Order Delivered!',
-        message: `OTP verified for order ${orderId}. Your order has been delivered successfully!`,
-        type: 'fulfilled',
-        icon: 'local_shipping'
+        title: '✅ Order Approved!',
+        message: `Your order ${orderId} has been approved! Your delivery OTP is: ${otp}. Share this with the delivery person.`,
+        type: 'approved',
+        icon: 'check_circle'
       }, 'retailer');
     }
+  };
+
+  // 8. Verify OTP delivery and settle amounts
+  const deliverB2BOrder = async (orderId, enteredOtp) => {
+    let success = false;
+    let earned = 0;
+    let retailerId = null;
+
+    if (isSupabaseConfigured) {
+      try {
+        const { data: order } = await supabase
+          .from('orders')
+          .select('*')
+          .eq('id', orderId)
+          .single();
+
+        if (order && order.otp === enteredOtp) {
+          success = true;
+          earned = Number(order.total);
+          retailerId = order.retailer_id;
+
+          // Update order status to fulfilled
+          await supabase.from('orders').update({ status: 'fulfilled' }).eq('id', orderId);
+
+          // Update distributor balance
+          const newBalance = walletBalance + earned;
+          await supabase.from('profiles').update({ wallet_balance: newBalance }).eq('id', user.id);
+
+          // Add transaction for wholesaler
+          await supabase.from('transactions').insert([{
+            user_id: user.id,
+            type: 'sale',
+            label: 'B2B Wholesale Fulfillment',
+            sub: 'Order ' + orderId,
+            amt: '+₹' + earned.toLocaleString('en-IN'),
+            clr: '#ffd060',
+            icon: 'local_shipping'
+          }]);
+
+          // Notify Retailer
+          await supabase.from('notifications').insert([{
+            user_id: retailerId,
+            title: 'Order Fulfilled',
+            body: `Order ${orderId} delivered successfully!`,
+            role: 'retailer'
+          }]);
+        }
+      } catch(e) {
+        console.error('Failed to complete delivery in database:', e);
+      }
+    } else {
+      const match = distOrdersState.find(o => o.id === orderId);
+      if (match && match.otp === enteredOtp) {
+        success = true;
+        earned = match.total;
+
+        setDistOrders(prev => prev.map(o => o.id === orderId ? { ...o, status: 'fulfilled' } : o));
+        setWalletBalance(prev => prev + earned);
+        addTransaction({
+          type: 'sale',
+          label: 'B2B Wholesale Fulfillment',
+          sub: 'Order ' + orderId,
+          date: 'Just now',
+          amt: '+₹' + earned.toLocaleString('en-IN'),
+          clr: '#ffd060',
+          icon: 'local_shipping'
+        });
+        addNotification({
+          title: 'Order Fulfilled',
+          body: `Order ${orderId} delivered successfully!`,
+          role: 'retailer', isRead: false
+        });
+        showGlobalPopup({
+          title: '🎉 Order Delivered!',
+          message: `OTP verified for order ${orderId}. Your order has been delivered successfully!`,
+          type: 'fulfilled',
+          icon: 'local_shipping'
+        }, 'retailer');
+      }
+    }
+
     return success;
   };
 
-  const rejectB2BOrder = (orderId) => {
-    setDistOrders(prev => prev.map(o => {
-      if (o.id === orderId) {
-        addNotification({
-          title: 'Order Rejected',
-          body: `Order ${orderId} was rejected by the distributor.`,
-          role: 'retailer', isRead: false
-        });
-        // Fire popup to retailer tab
-        showGlobalPopup({
-          title: '❌ Order Rejected',
-          message: `Order ${orderId} was rejected by the distributor (out of stock).`,
-          type: 'rejected',
-          icon: 'cancel'
-        }, 'retailer');
-        return { ...o, status: 'rejected' };
+  // 9. Reject order (out of stock/issue)
+  const rejectB2BOrder = async (orderId) => {
+    setDistOrders(prev => prev.map(o => o.id === orderId ? { ...o, status: 'rejected' } : o));
+
+    if (isSupabaseConfigured) {
+      try {
+        const { data: order } = await supabase
+          .from('orders')
+          .select('retailer_id')
+          .eq('id', orderId)
+          .single();
+
+        await supabase.from('orders').update({ status: 'rejected' }).eq('id', orderId);
+
+        if (order?.retailer_id) {
+          await supabase.from('notifications').insert([{
+            user_id: order.retailer_id,
+            title: 'Order Rejected',
+            body: `Order ${orderId} was rejected by the distributor.`,
+            role: 'retailer'
+          }]);
+        }
+      } catch(e) {
+        console.error('Failed to reject order in database:', e);
       }
-      return o;
-    }));
+    } else {
+      addNotification({
+        title: 'Order Rejected',
+        body: `Order ${orderId} was rejected by the distributor.`,
+        role: 'retailer', isRead: false
+      });
+      showGlobalPopup({
+        title: '❌ Order Rejected',
+        message: `Order ${orderId} was rejected by the distributor (out of stock).`,
+        type: 'rejected',
+        icon: 'cancel'
+      }, 'retailer');
+    }
+  };
+
+  // 10. Link connections (Retailers linking to wholesalers)
+  const saveConnectionLink = async (distributorProfile) => {
+    if (!isSupabaseConfigured || !user?.id) return;
+    try {
+      const isLinked = linkedDists.some(d => d.id === distributorProfile.id);
+      
+      if (isLinked) {
+        setLinkedDists(prev => prev.filter(d => d.id !== distributorProfile.id));
+        await supabase
+          .from('connections')
+          .delete()
+          .eq('retailer_id', user.id)
+          .eq('distributor_id', distributorProfile.id);
+      } else {
+        setLinkedDists(prev => [...prev, distributorProfile]);
+        await supabase
+          .from('connections')
+          .insert([{ retailer_id: user.id, distributor_id: distributorProfile.id }]);
+      }
+    } catch (e) {
+      console.error('Failed to save connection in database:', e);
+    }
   };
 
   const value = {
     user,
     setUser,
+    loginUser,
+    updateProfile,
     theme,
     toggleTheme,
     inventory,
@@ -544,6 +1074,7 @@ export const AppProvider = ({ children }) => {
     completeSale,
     linkedDists,
     setLinkedDists,
+    saveConnectionLink,
     walletBalance,
     setWalletBalance,
     initializeAIStore,

@@ -8,15 +8,17 @@ import { Chip } from '../components/ui/Chip';
 
 export const BuyFromDist = () => {
   const navigate = useNavigate();
-  const { user, placeB2BOrder, distOrders } = useAppContext();
+  const { user, placeB2BOrder, distOrders, linkedDists } = useAppContext();
   
-  const distOptions = [
-    { id: 'dist_1', name: 'Sharma Wholesale Distributors' },
-    { id: 'dist_2', name: 'Gupta Mega Suppliers' },
-    { id: 'dist_3', name: 'Metro Fresh B2B' },
-  ];
+  const distOptions = linkedDists && linkedDists.length > 0 
+    ? linkedDists 
+    : [
+        { id: 'dist_1', name: 'Sharma Wholesale Distributors' },
+        { id: 'dist_2', name: 'Gupta Mega Suppliers' },
+        { id: 'dist_3', name: 'Metro Fresh B2B' },
+      ];
 
-  const [selectedDistId, setSelectedDistId] = useState(distOptions[0].id);
+  const [selectedDistId, setSelectedDistId] = useState(distOptions[0]?.id || 'dist_1');
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [cart, setCart] = useState([]);
   
@@ -52,10 +54,14 @@ export const BuyFromDist = () => {
       return;
     }
     
+    const selectedDistName = distOptions.find(d => d.id === selectedDistId)?.name || 'Gupta Mega Suppliers';
+    
     placeB2BOrder({
       retailer: user.shop || user.name,
+      distributorName: selectedDistName,
       items: cart.reduce((sum, item) => sum + item.qty, 0),
-      total: total
+      total: total,
+      cartItems: cart.map(item => ({ id: item.id, name: item.name, qty: item.qty, price: item.price }))
     });
     
     setCart([]);
